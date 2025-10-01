@@ -122,7 +122,7 @@
       border-radius: 999px; color: #a8b3c6; cursor: pointer;
     }
     .tiny {
-      font-size: 12px; color: #9aa6bb;
+      font-size: 12px; color: #a9b5c6;
     }
   </style>
 </head>
@@ -143,10 +143,10 @@
       <select id="model" aria-label="Select AI model">
         <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5-mini (smallest)</option>
         <option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC">Qwen2.5-Coder-1.5B (code-oriented)</option>
-        <option value="Llama-3.1-3B-Instruct-q4f16_1-MLC">Llama-3.1-3B</option>
+        <option value="Llama-3.1-8B-Instruct-q4f16_1-MLC">Llama-3.1-8B</option>
       </select>
       <button id="loadLocal" class="action" type="button">Load Model</button>
-      <span class="tiny">Requires WebLLM for AI functionality.</span>
+      <span class="tiny">Requires WebLLM for AI. <a href="https://web.llm.mlc.ai/" target="_blank">Get it here</a>.</span>
     </div>
 
     <div class="stage" id="stage" role="region" aria-label="Animation stage">
@@ -179,64 +179,64 @@
     </div>
   </div>
 
-  <!-- Uncomment the line below if you have web-llm.umd.min.js -->
-  <!-- <script src="./lib/web-llm.umd.min.js"></script> -->
+  <!-- Include WebLLM via CDN for simplicity -->
+  <script src="https://unpkg.com/web-llm@0.2.34/dist/web-llm.umd.min.js"></script>
   <script>
     // Mock AI response for testing
     function getMockAIResponse(message) {
-      return `Echo-AI: You said "${message}". Please set up WebLLM for real AI responses.`;
+      return `Echo-AI: You said "${message}". Set up WebLLM for real AI responses. Check console for errors.`;
     }
 
-    // WebLLM integration (uncomment and configure if you have the library)
+    // WebLLM integration
     let llm = null;
     async function initWebLLM(model) {
-      if (!window.WebLLM) {
-        console.error('WebLLM not found. Ensure web-llm.umd.min.js is loaded.');
+      if (!window.mlcChat) {
+        console.error('WebLLM not loaded. Ensure the script is included and accessible.');
         return false;
       }
       try {
-        // Note: WebLLM API may vary; check documentation for exact syntax
-        llm = new WebLLM.LLM({ model: model });
-        await llm.load();
+        // Initialize WebLLM with the selected model
+        llm = await window.mlcChat.create(model, {
+          model_lib: `https://cdn.jsdelivr.net/npm/web-llm@0.2.34/dist/models/${model}/model.js`,
+        });
         console.log(`Model ${model} loaded successfully.`);
         return true;
       } catch (e) {
-        console.error('WebLLM initialization failed:', e);
+        console.error('WebLLM initialization failed:', e.message);
         return false;
       }
     }
+
     async function getWebLLMResponse(message) {
       if (!llm) return 'Error: AI model not loaded. Click "Load Model" first.';
       try {
-        const response = await llm.generate({ prompt: message });
+        const response = await llm.chat(message);
         return `Echo-AI: ${response}`;
       } catch (e) {
-        console.error('WebLLM response failed:', e);
-        return 'Error: Failed to generate AI response.';
+        console.error('WebLLM response failed:', e.message);
+        return 'Error: Failed to generate AI response. Check console.';
       }
     }
+
+    // Check WebGPU support
+    document.addEventListener('DOMContentLoaded', () => {
+      const status = document.getElementById('status');
+      if (!navigator.gpu) {
+        status.textContent = 'Error: WebGPU not supported. Use Chrome 113+ or Edge 113+.';
+        console.error('WebGPU not supported.');
+      } else {
+        status.textContent = 'Ready. Select a model and click Load Model.';
+      }
+    });
 
     // Load model button
     document.getElementById('loadLocal').addEventListener('click', () => {
       const status = document.getElementById('status');
       const model = document.getElementById('model').value;
       status.textContent = 'Loading model...';
-      // Check for WebGPU support
-      if (!navigator.gpu) {
-        status.textContent = 'Error: WebGPU not supported in this browser.';
-        console.error('WebGPU not supported. Use Chrome 113+ or Edge 113+.');
-        return;
-      }
-      // Use WebLLM if available, else mock
-      if (window.WebLLM) {
-        initWebLLM(model).then(success => {
-          status.textContent = success ? `Model ${model} loaded.` : 'Failed to load model. Check console.';
-        });
-      } else {
-        setTimeout(() => {
-          status.textContent = 'WebLLM not found. Using mock AI.';
-        }, 1000);
-      }
+      initWebLLM(model).then(success => {
+        status.textContent = success ? `Model ${model} loaded.` : 'Failed to load model. Check console.';
+      });
     });
 
     // Send message button
@@ -257,7 +257,7 @@
         setTimeout(() => {
           const aiRow = document.createElement('div');
           aiRow.className = 'row';
-          if (window.WebLLM && llm) {
+          if (llm) {
             getWebLLMResponse(message).then(response => {
               aiRow.innerHTML = `<div class="msg theirs">${response}</div>`;
               chat.appendChild(aiRow);
@@ -283,14 +283,35 @@
     document.querySelectorAll('.chip').forEach(chip => {
       chip.addEventListener('click', () => {
         const chat = document.getElementById('chat');
+        const message = `${chip.textContent} requested`;
         const row = document.createElement('div');
-        row.className = 'row';
-        row.innerHTML = `<div class="msg theirs">Echo-AI: ${chip.textContent} feature not implemented yet.</div>`;
+        row.className = 'row me';
+        row.innerHTML = `<div class="msg mine">${message}</div>`;
         chat.appendChild(row);
         chat.scrollTop = chat.scrollHeight;
-        const mouth = document.querySelector('.mouth');
-        mouth.classList.add('talk');
-        setTimeout(() => mouth.classList.remove('talk'), 300);
+
+        setTimeout(() => {
+          const aiRow = document.createElement('div');
+          aiRow.className = 'row';
+          if (llm) {
+            getWebLLMResponse(message).then(response => {
+              aiRow.innerHTML = `<div class="msg theirs">${response}</div>`;
+              chat.appendChild(aiRow);
+              chat.scrollTop = chat.scrollHeight;
+              const mouth = document.querySelector('.mouth');
+              mouth.classList.add('talk');
+              setTimeout(() => mouth.classList.remove('talk'), 300);
+            });
+          } else {
+            const response = getMockAIResponse(message);
+            aiRow.innerHTML = `<div class="msg theirs">${response}</div>`;
+            chat.appendChild(aiRow);
+            chat.scrollTop = chat.scrollHeight;
+            const mouth = document.querySelector('.mouth');
+            mouth.classList.add('talk');
+            setTimeout(() => mouth.classList.remove('talk'), 300);
+          }
+        }, 500);
       });
     });
   </script>
