@@ -51,11 +51,11 @@
         <option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC">Qwen2.5-Coder-1.5B-Instruct (better for code)</option>
         <option value="Llama-3.1-3B-Instruct-q4f16_1-MLC">Llama-3.1-3B-Instruct</option>
       </select>
-      <button id="load">Load Model</button>
+      <button id="load" disabled>Load Model</button>
     </div>
   </div>
 
-  <div class="status" id="status">Pick a model → <b>Load Model</b>. First load downloads once, then caches.</div>
+  <div class="status" id="status">Initializing…</div>
 
   <div class="card" style="margin-top:10px">
     <div id="chat" class="chat"></div>
@@ -71,15 +71,18 @@
     <div class="chip" data-text="Unity (GTag): C# MonoBehaviour that toggles Ghost Monkey + Snowball Spam via wrist UI; Photon PUN 2 safe RPCs.">GTag wrist toggle</div>
   </div>
 
-  <p class="hint">No server, no key. If it’s sluggish, pick the smallest model.</p>
+  <p class="hint">No server, no key. If it’s sluggish, pick the smallest model. If the loader says CDN blocked, open this page directly (not embedded) or try another browser.</p>
 </div>
 
-<!-- WebLLM UMD build -->
-<script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.55/dist/web-llm.umd.min.js"></script>
+<!-- Robust loader with fallbacks -->
 <script>
 const $ = s => document.querySelector(s);
-const statusEl = $("#status"), chatEl = $("#chat"), inputEl = $("#in");
-const sendBtn = $("#send"), modelEl = $("#model"), loadBtn = $("#load");
+const statusEl = $("#status");
+const loadBtn  = $("#load");
+const sendBtn  = $("#send");
+const modelEl  = $("#model");
+const chatEl   = $("#chat");
+const inputEl  = $("#in");
 
 let engine = null;
 const history = [
@@ -93,20 +96,17 @@ Rules:
 - Be concise.`}
 ];
 
+function setStatus(msg){ statusEl.innerHTML = msg; }
 function escapeHtml(s){ return String(s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
 function renderMarkdownLite(t){
-  const parts = String(t).split(/```/);
-  let out = "";
+  const parts = String(t).split(/```/); let out = "";
   for (let i=0;i<parts.length;i++){
-    if (i%2===0){ out += escapeHtml(parts[i]).replace(/\n/g,"<br>"); }
-    else{
-      const nl = parts[i].indexOf("\n");
-      let lang="txt", code=parts[i];
-      if(nl!==-1){ lang = parts[i].slice(0,nl).trim() || "txt"; code = parts[i].slice(nl+1); }
+    if (i%2===0) out += escapeHtml(parts[i]).replace(/\n/g,"<br>");
+    else { const nl = parts[i].indexOf("\n");
+      let lang="txt", code=parts[i]; if(nl!==-1){ lang = parts[i].slice(0,nl).trim() || "txt"; code = parts[i].slice(nl+1); }
       out += `<pre class="code"><code data-lang="${lang}">${escapeHtml(code)}</code></pre>`;
     }
-  }
-  return out;
+  } return out;
 }
 function addBubble(role, text){
   const row = document.createElement("div");
@@ -114,33 +114,64 @@ function addBubble(role, text){
   const msg = document.createElement("div");
   msg.className = "msg " + (role==="user" ? "mine" : "theirs");
   msg.innerHTML = renderMarkdownLite(text);
-  row.appendChild(msg); chatEl.appendChild(row);
-  chatEl.scrollTop = chatEl.scrollHeight;
+  row.appendChild(msg); chatEl.appendChild(row); chatEl.scrollTop = chatEl.scrollHeight;
 }
-function setStatus(m){ statusEl.innerHTML = m; }
+
+// Load WebLLM UMD with fallbacks
+async function ensureWebLLM(){
+  if (window.webllm) return true;
+  setStatus("Loading core…");
+
+  const urls = [
+    "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.55/dist/web-llm.umd.min.js",
+    "https://unpkg.com/@mlc-ai/web-llm@0.2.55/dist/web-llm.umd.min.js"
+  ];
+
+  for (const url of urls){
+    const ok = await new Promise((resolve)=>{
+      const s = document.createElement("script");
+      s.src = url; s.async = true; s.onload = ()=> resolve(true);
+      s.onerror = ()=> resolve(false);
+      document.head.appendChild(s);
+    });
+    if (ok && window.webllm) return true;
+  }
+  return false;
+}
+
+(async ()=>{
+  const ok = await ensureWebLLM();
+  if (!ok){
+    setStatus("Couldn’t load WebLLM from CDNs (blocked by browser or network). Open this page directly (not inside an embed) or try another browser.");
+    return;
+  }
+  setStatus("Ready. Pick a model and click Load Model.");
+  loadBtn.disabled = false;
+})();
 
 loadBtn.addEventListener("click", async ()=>{
+  if (!window.webllm){ setStatus("Loader not ready."); return; }
+  const { CreateMLCEngine, prebuiltAppConfig } = window.webllm;
   const modelId = modelEl.value;
   setStatus(`Loading <b>${escapeHtml(modelId)}</b>…`);
   sendBtn.disabled = true;
-  try {
-    const { CreateMLCEngine, prebuiltAppConfig } = window.webllm;
+  try{
     engine = await CreateMLCEngine(modelId, {
       appConfig: prebuiltAppConfig,
-      useWebWorker: false,   // main-thread mode (works on GH Pages + iframes)
-      gpu: true
-    }, (p)=> setStatus(`${escapeHtml(p.text)} ${Math.round(p.progress*100)}%`) );
+      useWebWorker: false,  // main thread (works in more iframes)
+      gpu: true             // try WebGPU; library will fallback if needed
+    }, (p)=> setStatus(`${escapeHtml(p.text)} ${Math.round(p.progress*100)}%`));
     setStatus(`Loaded <b>${escapeHtml(modelId)}</b>. You’re good to go.`);
     sendBtn.disabled = false; inputEl.focus();
-  } catch (e){
-    setStatus(`Load error: ${escapeHtml(e.message)}. Try the smallest model or open in a desktop browser with WebGPU.`);
+  }catch(e){
+    setStatus(`Load error: ${escapeHtml(e.message)}. Try the smallest model or open this page directly (not in an embed).`);
   }
 });
 
-async function send(){
+async function sendMsg(){
   const text = inputEl.value.trim();
-  if(!text || !engine) return;
-  inputEl.value = ""; inputEl.focus(); sendBtn.disabled = true;
+  if (!text || !engine) return;
+  inputEl.value=""; inputEl.focus(); sendBtn.disabled = true;
   addBubble("user", text);
   try{
     const msgs = history.concat([{ role:"user", content:text }]);
@@ -148,13 +179,16 @@ async function send(){
     const reply = out?.choices?.[0]?.message?.content ?? "No response.";
     history.push({ role:"user", content:text }); history.push({ role:"assistant", content:reply });
     addBubble("assistant", reply);
-  }catch(e){ addBubble("assistant", `**Error:** ${escapeHtml(e.message)}`); }
-  finally{ sendBtn.disabled = false; }
+  }catch(e){
+    addBubble("assistant", `**Error:** ${escapeHtml(e.message)}`);
+  }finally{
+    sendBtn.disabled = false;
+  }
 }
-
-sendBtn.addEventListener("click", send);
-inputEl.addEventListener("keydown", e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(); }});
+sendBtn.addEventListener("click", sendMsg);
+inputEl.addEventListener("keydown", e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendMsg(); }});
 document.querySelectorAll(".chip").forEach(ch=> ch.addEventListener("click", ()=>{ inputEl.value = ch.dataset.text; inputEl.focus(); }));
 </script>
 </body>
 </html>
+
