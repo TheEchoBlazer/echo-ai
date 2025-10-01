@@ -3,264 +3,173 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Ralfy Parachute — AI + Lip-Sync (Original Character)</title>
+<title>Echo-AI (No Key, Local WebLLM)</title>
 <style>
-  :root{
-    --bg:#0b0f14; --ink:#e8eef9; --muted:#9aa6bb; --line:#213047;
-    --accent:#7be0ff; --accent2:#8b5cf6; --skin:#f1c38a; --hair:#322214; --shirt:#2b3560;
-    --strap:#303a58; --mouth:#3b0d0d; --tongue:#b45555; --teeth:#fff;
-  }
+  :root{ --bg:#0b0f14; --ink:#e9eef7; --muted:#a8b3c6; --line:#223048; --hi:#6ee7ff; --hi2:#8b5cf6; }
   *{box-sizing:border-box}
-  body{margin:0;background:radial-gradient(1200px 700px at 10% -10%,#15233b 0%,#0b0f14 45%,#0b0f14 100%);color:var(--ink);font:14px/1.45 system-ui,Segoe UI,Roboto,Arial}
-  .wrap{max-width:960px;margin:0 auto;padding:16px}
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  body{margin:0;background:#0b0f14;color:var(--ink);font:14px/1.5 system-ui,Segoe UI,Roboto,Arial}
+  .wrap{max-width:900px;margin:0 auto;padding:16px}
+  .hdr{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .brand{display:flex;align-items:center;gap:10px}
-  .logo{width:28px;height:28px;border-radius:8px;background:conic-gradient(from 0deg,var(--accent),var(--accent2),var(--accent));box-shadow:0 0 22px #7be0ff55 inset,0 0 30px #8b5cf644}
+  .logo{width:28px;height:28px;border-radius:8px;background:conic-gradient(from 0deg,var(--hi),var(--hi2),var(--hi));box-shadow:0 0 22px #6ee7ff55 inset,0 0 30px #8b5cf644}
   h1{font-size:18px;margin:0}
   .sub{font-size:12px;color:var(--muted)}
-  .stage{position:relative;height:520px;border:1px solid var(--line);border-radius:16px;background:
-         linear-gradient(#0e1523 0 40%, #0b0f14 40% 100%); overflow:hidden; margin-top:12px}
-  .ground{position:absolute;inset:auto 0 0 0;height:90px;background:
-          radial-gradient(800px 120px at 50% 0%, #101829 0%, #0c101b 60%, #0b0f14 100%);
-          border-top:1px solid #1e2a47}
-  .shadow{position:absolute;left:50%;bottom:78px;transform:translateX(-50%);width:180px;height:22px;background:radial-gradient(closest-side,#00000055,#0000);filter:blur(4px);opacity:.0}
-  .ui{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-  textarea{flex:1 1 480px;min-height:64px;padding:10px;border-radius:12px;border:1px solid var(--line);background:#0e1626;color:var(--ink);outline:none}
-  button,select{border-radius:12px;border:1px solid var(--line);background:#0f172a;color:var(--ink);padding:10px 12px;cursor:pointer}
-  button.action{background:linear-gradient(90deg,var(--accent2),var(--accent));color:#061019;border:none;font-weight:800}
+  .card{background:#0f1625;border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:12px}
+  .chat{height:58vh;min-height:360px;overflow:auto;padding:12px}
+  .row{display:flex;gap:10px;margin:10px 0}
+  .me{justify-content:flex-end}
+  .msg{max-width:80%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;white-space:pre-wrap;word-wrap:anywhere}
+  .mine{background:#1b2742}
+  .theirs{background:#141b2c}
+  .code{display:block;background:#0b1120;border:1px solid #1a2742;border-radius:10px;padding:8px;overflow:auto;margin:8px 0}
+  .toolbar{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:#0d1424}
+  textarea{flex:1 1 auto;min-height:56px;max-height:180px;resize:vertical;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#0e1626;color:var(--ink)}
+  select,button{border-radius:10px;border:1px solid var(--line);background:#0e1626;color:var(--ink);padding:9px 12px}
+  button.action{background:linear-gradient(90deg,var(--hi2),var(--hi));color:#061019;border:none;font-weight:800}
   .hint{color:var(--muted);font-size:12px;margin-top:6px}
   .status{font-size:12px;color:#a9b5c9;margin-top:6px}
-
-  /* parachute + character container */
-  .rig{
-    position:absolute; left:50%; top:-420px; transform:translateX(-50%) translateY(0) rotate(0deg);
-    width:240px; height:420px; pointer-events:none;
-    animation: drop-in 2.2s cubic-bezier(.2,.8,.1,1) forwards, sway 2.2s ease-in-out;
-  }
-  @keyframes sway {
-    0%{ transform:translateX(-50%) translateY(0) rotate(0deg); }
-    25%{ transform:translateX(calc(-50% - 26px)) translateY(0) rotate(-3.5deg); }
-    50%{ transform:translateX(-50%) translateY(0) rotate(0deg); }
-    75%{ transform:translateX(calc(-50% + 26px)) translateY(0) rotate(3.5deg); }
-    100%{ transform:translateX(-50%) translateY(0) rotate(0deg); }
-  }
-  @keyframes drop-in{
-    0%{ top:-420px; }
-    70%{ top:290px; }
-    82%{ top:275px; }
-    100%{ top:282px; }
-  }
-  .land-impact{ animation: thump .25s ease-out; }
-  @keyframes thump{
-    0%{ transform:translateX(-50%) translateY(0) scale(1,1); }
-    50%{ transform:translateX(calc(-50% - 2px)) translateY(2px) scale(1.04,.96); }
-    100%{ transform:translateX(-50%) translateY(0) scale(1,1); }
-  }
-  .shake{ animation: shake .18s linear 2; }
-  @keyframes shake{
-    0%{ transform:translateX(0) } 25%{ transform:translateX(2px) }
-    50%{ transform:translateX(-2px) } 75%{ transform:translateX(1px) } 100%{ transform:translateX(0) }
-  }
-  .mouth{ transform-origin:50% 0%; transition:transform .06s linear }
-  .talk{ transform:scaleY(1.35) }
-  .cord{ transform-origin:50% 0%; transition:transform .12s ease-out }
-  .snap{ transform:rotate(12deg) }
-  .cta{
-    position:absolute; top:20px; right:20px; background:#0f1728; border:1px solid var(--line);
-    color:#c7d4ee; padding:8px 10px; border-radius:12px; font-size:12px; opacity:.85
-  }
-  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  .pill{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#0e1420;color:#a8b3c6;cursor:pointer}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .chip{padding:6px 10px;border:1px solid var(--line);background:#0e1420;border-radius:999px;color:#a8b3c6;cursor:pointer}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
+  <div class="hdr">
     <div class="brand">
       <div class="logo"></div>
       <div>
-        <h1>Ralfy Parachute — AI + Lip-Sync</h1>
-        <div class="sub">Original character. Drops in, then speaks your AI’s reply.</div>
+        <h1>Echo-AI — Skript & GTag (No Key)</h1>
+        <div class="sub">Runs locally with WebLLM. Open this URL directly (not embedded).</div>
       </div>
     </div>
-  </header>
-
-  <div class="stage" id="stage">
-    <div class="cta">Type text → Ask AI → he reads it. Or drive him via postMessage.</div>
-    <div class="shadow" id="shadow"></div>
-
-    <div class="rig" id="rig" aria-label="Ralfy with parachute">
-      <!-- Parachute -->
-      <svg viewBox="0 0 280 220" width="240" style="display:block;margin:0 auto">
-        <path d="M20,110 C50,10 230,10 260,110 Q140,160 20,110 Z" fill="#6bb0ff" stroke="#2b3d62" stroke-width="3"/>
-        <path d="M80,40 Q140,70 200,40" stroke="#35527e" stroke-width="2" fill="none" opacity=".7"/>
-        <path d="M50,70 Q140,90 230,70" stroke="#35527e" stroke-width="2" fill="none" opacity=".7"/>
-        <g fill="none" stroke="#bcd4ff" stroke-width="2">
-          <path class="cord" id="c1" d="M60,110 L90,200"/>
-          <path class="cord" id="c2" d="M110,120 L120,200"/>
-          <path class="cord" id="c3" d="M170,120 L160,200"/>
-          <path class="cord" id="c4" d="M220,110 L190,200"/>
-        </g>
-      </svg>
-
-      <!-- Ralfy -->
-      <svg id="ralfy" viewBox="0 0 260 300" width="240" style="display:block;margin:-10px auto 0">
-        <rect x="110" y="130" width="12" height="80" rx="6" fill="var(--strap)"/>
-        <rect x="138" y="130" width="12" height="80" rx="6" fill="var(--strap)"/>
-        <ellipse cx="130" cy="120" rx="82" ry="88" fill="var(--skin)" stroke="#00000022" stroke-width="2"/>
-        <ellipse cx="130" cy="76" rx="86" ry="58" fill="var(--hair)"/>
-        <ellipse cx="48" cy="122" rx="16" ry="20" fill="var(--skin)"/>
-        <ellipse cx="212" cy="122" rx="16" ry="20" fill="var(--skin)"/>
-        <ellipse cx="100" cy="114" rx="16" ry="14" fill="#fff"/>
-        <ellipse cx="160" cy="114" rx="16" ry="14" fill="#fff"/>
-        <circle id="pupilL" cx="104" cy="116" r="4" fill="#1c2440"/>
-        <circle id="pupilR" cx="164" cy="116" r="4" fill="#1c2440"/>
-        <path d="M128,128 q4,10 0,16" stroke="#8f6b3c" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <g id="mouthGroup" transform="translate(0,0)">
-          <path id="mouth" class="mouth" d="M98,152 q32,22 64,0 q-8,18 -32,18 q-24,0 -32,-18 Z" fill="var(--mouth)"/>
-          <rect x="110" y="160" width="40" height="6" rx="3" fill="var(--teeth)"/>
-          <ellipse cx="130" cy="170" rx="18" ry="8" fill="var(--tongue)" opacity=".8"/>
-        </g>
-        <rect x="80" y="190" width="100" height="86" rx="18" fill="var(--shirt)"/>
-        <rect x="90" y="274" width="26" height="18" rx="6" fill="#1e2748"/>
-        <rect x="144" y="274" width="26" height="18" rx="6" fill="#1e2748"/>
-      </svg>
+    <div class="bar">
+      <select id="model">
+        <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5-mini-instruct (smallest)</option>
+        <option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC">Qwen2.5-Coder-1.5B (best for code)</option>
+        <option value="Llama-3.1-3B-Instruct-q4f16_1-MLC">Llama-3.1-3B-Instruct</option>
+      </select>
+      <button id="load" class="action">Load Model</button>
     </div>
-
-    <div class="ground"></div>
   </div>
 
-  <div class="ui">
-    <textarea id="userText" placeholder="Type a prompt or paste your AI's answer..."></textarea>
-    <button class="action" id="ask">Ask AI</button>
-    <button id="speak">Speak</button>
-    <select id="voice"></select>
+  <div class="card">
+    <div id="chat" class="chat"></div>
+    <div class="toolbar">
+      <textarea id="in" placeholder="e.g., “Skript: /dupe up to 4; block &cHeart; 5s cooldown; perm echo.dupe.”"></textarea>
+      <button id="send">Send</button>
+    </div>
   </div>
 
-  <div class="toolbar">
-    <div class="pill" data-text="Skript: /dupe up to 4 items; block &cHeart; 5s cooldown; perm echo.dupe.">/dupe example</div>
-    <div class="pill" data-text="Unity (GTag): C# wrist button toggles Ghost Monkey and Snowball Spam with Photon PUN 2 RPC safety.">GTag wrist toggle</div>
+  <div class="chips">
+    <div class="chip" data-text="Skript: command /dupe that duplicates held item up to 4; deny if item's name contains &cHeart or if custom model data is 123. Include cooldown 5s and permission echo.dupe.">/dupe up to 4 + block hearts</div>
+    <div class="chip" data-text="Skript: 'Quacke Mace' with right-click wind burst (level 5), shift-right-click ground slam; base damage ~9 hearts; only one exists server-wide; crafting recipe; admin bypass perm quacke.admin.">Quacke Mace</div>
+    <div class="chip" data-text="Unity (GTag): C# MonoBehaviour that toggles Ghost Monkey + Snowball Spam via wrist UI; Photon PUN 2 safe RPCs.">GTag wrist toggle</div>
   </div>
 
-  <div class="status" id="status">Set your proxy URL in the code if Ask AI fails.</div>
+  <div id="status" class="status">Ready. Click “Load Model”.</div>
+  <div class="hint">If “Load Model” stalls, make sure you opened the GitHub Pages URL directly and you’re on Chrome/Edge desktop. WebGPU helps; it can fallback to WASM (slower).</div>
 </div>
 
+<!-- 1) Try local copy (recommended). Put lib/web-llm.umd.min.js in your repo. -->
+<script src="./lib/web-llm.umd.min.js"></script>
+<!-- 2) Fallbacks if local is missing -->
 <script>
-/*** ---- CONFIG ---- ***/
-// Replace with your Cloudflare Worker URL (from the proxy we set up earlier).
-const WORKER_URL = "https://YOUR_WORKER_URL"; // e.g., https://echo-ai-proxy.yourname.workers.dev
-// If empty, Ask AI will show an error but Speak still works.
-
-/*** ---- ELEMENTS ---- ***/
-const rig = document.getElementById('rig');
-const shadow = document.getElementById('shadow');
-const cords = [...document.querySelectorAll('.cord')];
-const mouth = document.getElementById('mouth');
-const statusEl = document.getElementById('status');
-const btnSpeak = document.getElementById('speak');
-const btnAsk = document.getElementById('ask');
-const ta = document.getElementById('userText');
-const voiceSel = document.getElementById('voice');
-
-/*** ---- LANDING FX ---- ***/
-let landingDone = false;
-rig.addEventListener('animationend', (e)=>{
-  if (e.animationName === 'drop-in' && !landingDone) {
-    landingDone = true;
-    rig.classList.add('land-impact');
-    document.getElementById('stage').classList.add('shake');
-    shadow.style.opacity = .85;
-    cords.forEach(c=>c.classList.add('snap'));
-    setTimeout(()=>document.getElementById('stage').classList.remove('shake'), 260);
-  }
-});
-
-/*** ---- TTS + LIPSYNC ---- ***/
-let voices = [];
-function loadVoices(){
-  voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
-  voiceSel.innerHTML = voices.map((v,i)=>`<option value="${i}">${v.name} (${v.lang})${v.default?' — default':''}</option>`).join('');
-}
-loadVoices(); speechSynthesis.onvoiceschanged = loadVoices;
-
-let talkingTimer = null;
-function speak(text){
-  if(!text){ note('Nothing to speak.'); return; }
-  speechSynthesis.cancel();
-  clearInterval(talkingTimer);
-  mouth.classList.remove('talk');
-
-  const u = new SpeechSynthesisUtterance(text);
-  if (voices.length) u.voice = voices[voiceSel.value|0] || voices[0];
-  u.rate = 1.0; u.pitch = 1.0; u.volume = 1.0;
-
-  u.onstart = ()=>{
-    note('Speaking…');
-    let open=false;
-    talkingTimer = setInterval(()=>{ open=!open; mouth.classList.toggle('talk', open); }, 90);
-  };
-  u.onboundary = (ev)=>{ if (ev.name === 'word' || ev.charIndex % 5 === 0) mouth.classList.toggle('talk'); };
-  u.onend = ()=>{ clearInterval(talkingTimer); mouth.classList.remove('talk'); note('Done.'); };
-  speechSynthesis.speak(u);
-}
-btnSpeak.addEventListener('click', ()=> speak(ta.value.trim()));
-
-/*** ---- AI (via proxy) ---- ***/
-const systemPrompt =
-`You are a coding helper for Minecraft Skript (Minehut/Purpur/1.21.x, SkBee) and Gorilla Tag/Unity 2021.3.21f1 (Photon PUN 2, PlayFab).
-Return concise, copy-pasteable code in triple backticks. Avoid deprecated Skript syntaxes.`;
-
-const history = [{ role: "system", content: systemPrompt }];
-
-async function askAI(){
-  const text = ta.value.trim();
-  if (!WORKER_URL) { note('Missing WORKER_URL in code.'); return; }
-  if (!text){ note('Type something first.'); return; }
-
-  btnAsk.disabled = true; note('Asking AI…');
-
-  try{
-    const convo = history.concat([{ role:"user", content:text }]);
-    const r = await fetch(WORKER_URL, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ messages: convo })
+(async ()=>{
+  function loaded(){ return !!window.webllm; }
+  async function addScript(src){
+    return new Promise(res=>{
+      const s=document.createElement('script'); s.src=src; s.async=true;
+      s.onload=()=>res(true); s.onerror=()=>res(false); document.head.appendChild(s);
     });
-    const data = await r.json();
-    const reply = data?.text || data?.error || "No response.";
-    history.push({ role:"user", content:text });
-    history.push({ role:"assistant", content:reply });
-    ta.value = reply;          // show reply
-    speak(reply);              // auto-speak
-    note('AI replied.');
-  }catch(e){
-    note('AI error: '+ e.message);
-  }finally{
-    btnAsk.disabled = false;
   }
+  if (!loaded()){
+    await addScript("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.55/dist/web-llm.umd.min.js");
+  }
+  if (!loaded()){
+    await addScript("https://unpkg.com/@mlc-ai/web-llm@0.2.55/dist/web-llm.umd.min.js");
+  }
+  if (!loaded()){
+    document.getElementById('status').textContent =
+      "Couldn’t load WebLLM. Add lib/web-llm.umd.min.js to your repo, or try another browser.";
+  }
+})();
+</script>
+
+<script>
+const $ = s => document.querySelector(s);
+const chatEl = $("#chat"), inputEl = $("#in"), sendBtn = $("#send");
+const modelEl = $("#model"), loadBtn = $("#load"), statusEl = $("#status");
+
+let engine=null;
+const history=[{role:"system", content:
+`You are a focused coding helper for Minecraft Skript (Minehut/Purpur/1.21.x, SkBee) and Gorilla Tag/Unity 2021.3.21f1 (Photon PUN 2, PlayFab).
+Rules:
+- Return code in triple backticks with language tags: \`\`\`skript\`\`\`, \`\`\`csharp\`\`\`, \`\`\`json\`\`\`, etc.
+- Skript: include permissions, simple cooldowns, deny messages; avoid deprecated syntaxes.
+- Unity: include needed 'using' lines; keep snippets drop-in; explain only critical setup.
+- If a request is unsafe or against platform rules, refuse briefly and suggest a safer alternative.
+- Be concise.`}];
+
+function escapeHtml(s){return String(s).replace(/[<>&]/g,c=>({ '<':'&lt;','>':'&gt;','&':'&amp;' }[c]));}
+function renderMarkdownLite(t){
+  const parts=String(t).split(/```/); let out="";
+  for(let i=0;i<parts.length;i++){
+    if(i%2===0) out+=escapeHtml(parts[i]).replace(/\n/g,"<br>");
+    else{ const nl=parts[i].indexOf("\n"); let lang="txt",code=parts[i];
+      if(nl!==-1){ lang=parts[i].slice(0,nl).trim()||"txt"; code=parts[i].slice(nl+1); }
+      out+=`<pre class="code"><code data-lang="${lang}">${escapeHtml(code)}</code></pre>`;
+    }
+  } return out;
 }
-btnAsk.addEventListener('click', askAI);
+function addBubble(role,text){
+  const row=document.createElement("div");
+  row.className="row"+(role==="user"?" me":"");
+  const msg=document.createElement("div");
+  msg.className="msg "+(role==="user"?"mine":"theirs");
+  msg.innerHTML=renderMarkdownLite(text);
+  row.appendChild(msg); chatEl.appendChild(row); chatEl.scrollTop=chatEl.scrollHeight;
+}
+function setStatus(m){ statusEl.textContent=m; }
 
-/*** ---- helper UI ---- ***/
-function note(msg){ statusEl.textContent = msg; }
-document.querySelectorAll('.pill').forEach(el => el.addEventListener('click', ()=>{ ta.value = el.dataset.text; ta.focus(); }));
-
-/*** ---- cross-window drive ----
-postMessage({type:'ralfy:say', text:'hello world'}) to make him talk.
-postMessage({type:'ralfy:ask', text:'write a Skript /heal command...'}) to ask AI then speak.
-***/
-window.addEventListener('message', async (e)=>{
-  const d = e.data || {};
-  if (typeof d !== 'object') return;
-  if (d.type === 'ralfy:say' && typeof d.text === 'string'){
-    ta.value = d.text; speak(d.text);
-  }
-  if (d.type === 'ralfy:ask' && typeof d.text === 'string'){
-    ta.value = d.text; await askAI();
+loadBtn.addEventListener("click", async ()=>{
+  if(!window.webllm){ setStatus("WebLLM script missing. See note above."); return; }
+  const { CreateMLCEngine, prebuiltAppConfig } = window.webllm;
+  const modelId = modelEl.value;
+  setStatus(`Loading ${modelId}…`);
+  sendBtn.disabled = true;
+  try{
+    engine = await CreateMLCEngine(modelId, {
+      appConfig: prebuiltAppConfig,
+      useWebWorker: false,   // main-thread mode (works on GH Pages)
+      gpu: true              // tries WebGPU, falls back internally
+    }, (p)=> setStatus(`${p.text} ${Math.round(p.progress*100)}%`));
+    setStatus(`Loaded ${modelId}. Type and hit Send.`);
+  }catch(e){
+    setStatus(`Load error: ${e.message}`);
   }
 });
+
+async function send(){
+  const text=inputEl.value.trim();
+  if(!text || !engine) return;
+  inputEl.value=""; inputEl.focus(); sendBtn.disabled=true;
+  addBubble("user",text);
+  try{
+    const msgs=history.concat([{role:"user",content:text}]);
+    const out=await engine.chat.completions.create({messages:msgs,temperature:0.2,max_tokens:900});
+    const reply=out?.choices?.[0]?.message?.content ?? "No response.";
+    history.push({role:"user",content:text}); history.push({role:"assistant",content:reply});
+    addBubble("assistant",reply);
+  }catch(e){
+    addBubble("assistant","**Error:** "+escapeHtml(e.message));
+  }finally{ sendBtn.disabled=false; }
+}
+sendBtn.addEventListener("click", send);
+inputEl.addEventListener("keydown", e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(); }});
+document.querySelectorAll(".chip").forEach(ch=> ch.addEventListener("click", ()=>{ inputEl.value=ch.dataset.text; inputEl.focus(); }));
 </script>
 </body>
 </html>
+
 
 
