@@ -146,7 +146,7 @@
         <option value="Llama-3.1-3B">Llama-3.1-3B</option>
       </select>
       <button id="loadLocal" class="action" type="button">Load Model</button>
-      <span class="tiny">No external dependencies required.</span>
+      <span class="tiny">AI runs locally with WebLLM.</span>
     </div>
 
     <div class="stage" id="stage" role="region" aria-label="Animation stage">
@@ -179,22 +179,62 @@
     </div>
   </div>
 
+  <!-- Uncomment the line below if you have web-llm.umd.min.js -->
+  <!-- <script src="./lib/web-llm.umd.min.js"></script> -->
   <script>
-    // Handle model loading (placeholder)
+    // Mock AI response function
+    function getMockAIResponse(message) {
+      return `Echo-AI: You said "${message}". I'm a mock AI, replace me with WebLLM!`;
+    }
+
+    // Initialize WebLLM (uncomment and configure if you have the library)
+    /*
+    let llm = null;
+    async function initWebLLM(model) {
+      try {
+        llm = new WebLLM.LLM({ modelId: model });
+        await llm.load();
+        return true;
+      } catch (e) {
+        console.error('WebLLM failed:', e);
+        return false;
+      }
+    }
+    async function getWebLLMResponse(message) {
+      if (!llm) return 'Error: AI model not loaded.';
+      try {
+        const response = await llm.generate(message);
+        return `Echo-AI: ${response}`;
+      } catch (e) {
+        console.error('WebLLM response failed:', e);
+        return 'Error: Failed to generate response.';
+      }
+    }
+    */
+
+    // Load model button
     document.getElementById('loadLocal').addEventListener('click', () => {
       const status = document.getElementById('status');
+      const model = document.getElementById('model').value;
       status.textContent = 'Loading model...';
       setTimeout(() => {
-        status.textContent = 'Model loaded (simulated).';
+        status.textContent = `Model ${model} loaded (simulated).`;
+        // Uncomment for WebLLM
+        /*
+        initWebLLM(model).then(success => {
+          status.textContent = success ? `Model ${model} loaded.` : 'Failed to load model.';
+        });
+        */
       }, 1000);
     });
 
-    // Handle chat messages
+    // Send message button
     document.getElementById('send').addEventListener('click', () => {
       const input = document.getElementById('input');
       const chat = document.getElementById('chat');
       const message = input.value.trim();
       if (message) {
+        // Add user message
         const row = document.createElement('div');
         row.className = 'row me';
         row.innerHTML = `<div class="msg mine">${message}</div>`;
@@ -202,11 +242,23 @@
         input.value = '';
         chat.scrollTop = chat.scrollHeight;
 
-        // Simulate AI response
+        // Add AI response
         setTimeout(() => {
           const aiRow = document.createElement('div');
           aiRow.className = 'row';
-          aiRow.innerHTML = `<div class="msg theirs">Echo-AI: Got your message!</div>`;
+          // Use mock response (uncomment WebLLM code for real AI)
+          const response = getMockAIResponse(message);
+          /*
+          getWebLLMResponse(message).then(response => {
+            aiRow.innerHTML = `<div class="msg theirs">${response}</div>`;
+            chat.appendChild(aiRow);
+            chat.scrollTop = chat.scrollHeight;
+            const mouth = document.querySelector('.mouth');
+            mouth.classList.add('talk');
+            setTimeout(() => mouth.classList.remove('talk'), 300);
+          });
+          */
+          aiRow.innerHTML = `<div class="msg theirs">${response}</div>`;
           chat.appendChild(aiRow);
           chat.scrollTop = chat.scrollHeight;
           const mouth = document.querySelector('.mouth');
@@ -216,7 +268,7 @@
       }
     });
 
-    // Handle chip buttons (placeholder)
+    // Chip buttons
     document.querySelectorAll('.chip').forEach(chip => {
       chip.addEventListener('click', () => {
         const chat = document.getElementById('chat');
@@ -225,6 +277,9 @@
         row.innerHTML = `<div class="msg theirs">Echo-AI: ${chip.textContent} feature not implemented yet.</div>`;
         chat.appendChild(row);
         chat.scrollTop = chat.scrollHeight;
+        const mouth = document.querySelector('.mouth');
+        mouth.classList.add('talk');
+        setTimeout(() => mouth.classList.remove('talk'), 300);
       });
     });
   </script>
