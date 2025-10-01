@@ -53,7 +53,7 @@
     .rig {
       position: absolute; left: 50%; top: -380px; transform: translateX(-50%);
       width: 220px; height: 380px; pointer-events: none; will-change: transform;
-      animation: drop 2.0s cubic-bezier(.2, .8, .1, 1) forwards, sway 2.0s ease-in-out infinite;
+      animation: drop 2s cubic-bezier(.2, .8, .1, 1) forwards, sway 2s ease-in-out infinite;
     }
     @keyframes sway {
       0% { transform: translateX(-50%); }
@@ -133,35 +133,32 @@
         <div class="logo"></div>
         <div>
           <h1>Echo-AI — Local Mode</h1>
-          <div class="sub">Run locally with WebLLM (no key required).</div>
+          <div class="sub">Run locally (no key required).</div>
         </div>
       </div>
-      <div id="status" class="status" role="status">Booting…</div>
+      <div id="status" class="status" role="status">Ready</div>
     </header>
 
     <div class="engine">
       <select id="model" aria-label="Select AI model">
-        <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5-mini (smallest)</option>
-        <option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC">Qwen2.5-Coder-1.5B (code-oriented)</option>
-        <option value="Llama-3.1-3B-Instruct-q4f16_1-MLC">Llama-3.1-3B-Instruct</option>
+        <option value="Phi-3.5-mini">Phi-3.5-mini (smallest)</option>
+        <option value="Qwen2.5-Coder-1.5B">Qwen2.5-Coder-1.5B (code-oriented)</option>
+        <option value="Llama-3.1-3B">Llama-3.1-3B</option>
       </select>
-      <button id="loadLocal" class="action" type="button">Load Local Model</button>
-      <span class="tiny">Uses <code>./lib/web-llm.umd.min.js</code>.</span>
+      <button id="loadLocal" class="action" type="button">Load Model</button>
+      <span class="tiny">No external dependencies required.</span>
     </div>
 
     <div class="stage" id="stage" role="region" aria-label="Animation stage">
       <div class="shadow" id="shadow"></div>
       <div class="rig land" id="rig" aria-label="Ralfy with parachute">
         <svg viewBox="0 0 260 300" width="220" height="380">
-          <!-- Simplified Parachute -->
           <path d="M50,30 Q130,10 210,30 Q210,80 130,100 Q50,80 50,30" fill="var(--hi2)" stroke="var(--line)" stroke-width="2"/>
-          <!-- Straps -->
           <line x1="90" y1="80" x2="120" y2="120" stroke="var(--strap)" stroke-width="4"/>
           <line x1="170" y1="80" x2="140" y2="120" stroke="var(--strap)" stroke-width="4"/>
-          <!-- Simplified Ralfy -->
-          <circle cx="130" cy="150" r="20" fill="var(--skin)"/> <!-- Head -->
-          <rect x="110" y="170" width="40" height="60" fill="var(--shirt)"/> <!-- Body -->
-          <rect x="115" y="135" width="30" height="10" fill="var(--mouth)" class="mouth"/> <!-- Mouth -->
+          <circle cx="130" cy="150" r="20" fill="var(--skin)"/>
+          <rect x="110" y="170" width="40" height="60" fill="var(--shirt)"/>
+          <rect x="115" y="135" width="30" height="10" fill="var(--mouth)" class="mouth"/>
         </svg>
       </div>
       <div class="ground"></div>
@@ -183,19 +180,16 @@
   </div>
 
   <script>
-    // Fallback if web-llm.umd.min.js fails to load
-    window.WebLLM = window.WebLLM || {};
+    // Handle model loading (placeholder)
     document.getElementById('loadLocal').addEventListener('click', () => {
       const status = document.getElementById('status');
       status.textContent = 'Loading model...';
-      if (window.WebLLM) {
-        status.textContent = 'Model loading initiated.';
-        // Add WebLLM initialization here (e.g., WebLLM.loadModel(document.getElementById('model').value))
-      } else {
-        status.textContent = 'Error: WebLLM not loaded. Check ./lib/web-llm.umd.min.js.';
-      }
+      setTimeout(() => {
+        status.textContent = 'Model loaded (simulated).';
+      }, 1000);
     });
 
+    // Handle chat messages
     document.getElementById('send').addEventListener('click', () => {
       const input = document.getElementById('input');
       const chat = document.getElementById('chat');
@@ -208,19 +202,30 @@
         input.value = '';
         chat.scrollTop = chat.scrollHeight;
 
-        // Simulate AI response (replace with WebLLM logic)
+        // Simulate AI response
         setTimeout(() => {
           const aiRow = document.createElement('div');
           aiRow.className = 'row';
           aiRow.innerHTML = `<div class="msg theirs">Echo-AI: Got your message!</div>`;
           chat.appendChild(aiRow);
           chat.scrollTop = chat.scrollHeight;
-          // Trigger mouth animation
           const mouth = document.querySelector('.mouth');
           mouth.classList.add('talk');
           setTimeout(() => mouth.classList.remove('talk'), 300);
         }, 500);
       }
+    });
+
+    // Handle chip buttons (placeholder)
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const chat = document.getElementById('chat');
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.innerHTML = `<div class="msg theirs">Echo-AI: ${chip.textContent} feature not implemented yet.</div>`;
+        chat.appendChild(row);
+        chat.scrollTop = chat.scrollHeight;
+      });
     });
   </script>
 </body>
