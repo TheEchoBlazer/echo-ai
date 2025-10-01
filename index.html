@@ -3,61 +3,297 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Echo-AI One-File</title>
+<title>Echo-AI (Offline, One File)</title>
 <style>
-body{margin:0;background:#0b0f14;color:#e8eef9;font:14px system-ui}
-.wrap{max-width:720px;margin:auto;padding:12px}
-header{display:flex;align-items:center;justify-content:space-between}
-h1{margin:0;font-size:18px}
-.status{font-size:12px;color:#9aa6bb;margin-top:4px}
-.stage{position:relative;height:320px;margin:12px 0;background:#0e1523;border-radius:12px;overflow:hidden}
-.shadow{position:absolute;left:50%;bottom:50px;transform:translateX(-50%);width:160px;height:20px;background:radial-gradient(closest-side,#0006,#0000);opacity:0}
-.rig{position:absolute;left:50%;top:-260px;transform:translateX(-50%);width:160px;height:260px;animation:drop 2s cubic-bezier(.2,.8,.1,1) forwards}
-@keyframes drop{0%{top:-260px}80%{top:180px}100%{top:190px}}
-.mouth{transition:transform .06s linear;transform-origin:50% 0}
-.talk{transform:scaleY(1.35)}
-.chat{background:#0f1625;border-radius:12px;padding:8px;height:180px;overflow:auto}
-.row{margin:6px 0}.mine{text-align:right}
-.msg{display:inline-block;padding:6px 10px;border-radius:8px;background:#141b2c}
-.mine .msg{background:#1b2742}
-.toolbar{display:flex;margin-top:6px}
-textarea{flex:1;min-height:48px;background:#0e1626;color:#e8eef9;border:1px solid #20304a;border-radius:8px;padding:6px}
-button{margin-left:6px;padding:8px 12px;border:none;border-radius:8px;background:linear-gradient(90deg,#8b5cf6,#6ee7ff);color:#061019;font-weight:700;cursor:pointer}
+  :root{--bg:#0b0f14;--ink:#e8eef9;--muted:#9aa6bb;--line:#20304a;--hi:#6ee7ff;--hi2:#8b5cf6;
+        --skin:#f1c38a;--hair:#322214;--shirt:#2b3560;--strap:#303a58;--mouth:#3b0d0d;--tongue:#b45555;--teeth:#fff}
+  *{box-sizing:border-box} body{margin:0;background:#0b0f14;color:var(--ink);font:14px system-ui,Segoe UI,Roboto,Arial}
+  .wrap{max-width:920px;margin:0 auto;padding:14px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  h1{margin:0;font-size:18px}
+  .sub{font-size:12px;color:var(--muted)}
+  .status{font-size:12px;color:#a9b5c9;margin-top:6px}
+  .stage{position:relative;height:420px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(#0e1523 0 48%,#0b0f14 48%);overflow:hidden;margin-top:12px}
+  .shadow{position:absolute;left:50%;bottom:70px;transform:translateX(-50%);width:180px;height:22px;background:radial-gradient(closest-side,#0006,#0000);filter:blur(4px);opacity:0}
+  .rig{position:absolute;left:50%;top:-380px;transform:translateX(-50%);width:220px;height:380px;pointer-events:none;
+       animation:drop 2.0s cubic-bezier(.2,.8,.1,1) forwards,sway 2.0s ease-in-out}
+  @keyframes sway{0%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 24px)) rotate(-3.5deg)}50%{transform:translateX(-50%)}75%{transform:translateX(calc(-50% + 24px)) rotate(3.5deg)}100%{transform:translateX(-50%)}}
+  @keyframes drop{0%{top:-380px}70%{top:250px}82%{top:236px}100%{top:242px}}
+  .land{animation:thump .25s ease-out}@keyframes thump{0%{transform:translateX(-50%) scale(1)}50%{transform:translateX(calc(-50% - 2px)) scale(1.04,.96)}100%{transform:translateX(-50%) scale(1)}}
+  .shake{animation:shake .18s linear 2}@keyframes shake{0%{transform:translateX(0)}25%{transform:translateX(2px)}50%{transform:translateX(-2px)}75%{transform:translateX(1px)}100%{transform:translateX(0)}}
+  .mouth{transform-origin:50% 0%;transition:transform .06s linear}.talk{transform:scaleY(1.35)}
+  .ground{position:absolute;left:0;right:0;bottom:0;height:80px;background:radial-gradient(800px 120px at 50% 0%,#101829 0%,#0c101b 60%,#0b0f14 100%);border-top:1px solid #1e2a47}
+  .card{background:#0f1625;border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:12px}
+  .toolbar{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:#0d1424}
+  textarea{flex:1;min-height:64px;background:#0e1626;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px}
+  button{padding:9px 12px;border:none;border-radius:10px;background:linear-gradient(90deg,var(--hi2),var(--hi));color:#061019;font-weight:800;cursor:pointer}
+  .chat{height:220px;overflow:auto;padding:12px}
+  .row{display:flex;margin:8px 0}
+  .row.me{justify-content:flex-end}
+  .msg{max-width:80%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#141b2c;white-space:pre-wrap;word-wrap:anywhere}
+  .row.me .msg{background:#1b2742}
+  .code{display:block;background:#0b1120;border:1px solid #1a2742;border-radius:10px;padding:8px;overflow:auto;margin:8px 0}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .chip{padding:6px 10px;border:1px solid var(--line);background:#0e1420;border-radius:999px;color:#a8b3c6;cursor:pointer}
+  .row-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .mini{font-size:12px;color:#a9b5c9}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header><h1>Echo-AI</h1><div id="status" class="status">ready</div></header>
+  <header>
+    <div>
+      <h1>Echo-AI (Offline)</h1>
+      <div class="sub">One file. No keys, no CDNs. Rule-based generator for Skript & GTag/Unity.</div>
+    </div>
+    <div id="status" class="status">Ready.</div>
+  </header>
 
-  <div class="stage">
+  <div class="stage" id="stage">
     <div class="shadow" id="shadow"></div>
-    <div class="rig" id="rig">
-      <svg viewBox="0 0 260 300" width="160">
-        <ellipse cx="130" cy="120" rx="70" ry="80" fill="#f1c38a"/>
-        <ellipse cx="130" cy="80" rx="74" ry="40" fill="#322214"/>
-        <ellipse cx="100" cy="114" rx="14" ry="12" fill="#fff"/>
-        <ellipse cx="160" cy="114" rx="14" ry="12" fill="#fff"/>
-        <circle cx="104" cy="116" r="3" fill="#1c2440"/>
-        <circle cx="164" cy="116" r="3" fill="#1c2440"/>
-        <path id="mouth" class="mouth" d="M98,152 q32,22 64,0 q-8,18 -32,18 q-24,0 -32,-18 Z" fill="#3b0d0d"/>
+    <div class="rig" id="rig" aria-label="Ralfy">
+      <svg id="ralfy" viewBox="0 0 260 300" width="220" style="display:block;margin:50px auto 0">
+        <ellipse cx="130" cy="120" rx="82" ry="88" fill="var(--skin)" stroke="#00000022" stroke-width="2"/>
+        <ellipse cx="130" cy="76" rx="86" ry="58" fill="var(--hair)"/>
+        <ellipse cx="48" cy="122" rx="16" ry="20" fill="var(--skin)"/>
+        <ellipse cx="212" cy="122" rx="16" ry="20" fill="var(--skin)"/>
+        <ellipse cx="100" cy="114" rx="16" ry="14" fill="#fff"/>
+        <ellipse cx="160" cy="114" rx="16" ry="14" fill="#fff"/>
+        <circle cx="104" cy="116" r="4" fill="#1c2440"/>
+        <circle cx="164" cy="116" r="4" fill="#1c2440"/>
+        <path d="M128,128 q4,10 0,16" stroke="#8f6b3c" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <g id="mouthGroup">
+          <path id="mouth" class="mouth" d="M98,152 q32,22 64,0 q-8,18 -32,18 q-24,0 -32,-18 Z" fill="var(--mouth)"/>
+          <rect x="110" y="160" width="40" height="6" rx="3" fill="var(--teeth)"/>
+          <ellipse cx="130" cy="170" rx="18" ry="8" fill="var(--tongue)" opacity=".8"/>
+        </g>
+        <rect x="80" y="190" width="100" height="86" rx="18" fill="var(--shirt)"/>
+        <rect x="90" y="274" width="26" height="18" rx="6" fill="#1e2748"/>
+        <rect x="144" y="274" width="26" height="18" rx="6" fill="#1e2748"/>
       </svg>
+    </div>
+    <div class="ground"></div>
+  </div>
+
+  <div class="card">
+    <div id="chat" class="chat"></div>
+    <div class="toolbar">
+      <textarea id="in" placeholder="e.g., Skript: /dupe up to 4; block &cHeart; 5s cooldown; perm echo.dupe."></textarea>
+      <button id="send">Generate</button>
     </div>
   </div>
 
-  <div id="chat" class="chat"></div>
-  <div class="toolbar">
-    <textarea id="in" placeholder="ask skript / gtag code…"></textarea>
-    <button id="send">Ask</button>
+  <div class="chips">
+    <div class="chip" data-text="Skript: command /dupe that duplicates held item up to 4; deny if item's name contains &cHeart or if custom model data is 123. Include 5s cooldown and permission echo.dupe.">/dupe example</div>
+    <div class="chip" data-text="Skript: Only one 'Quacke Mace' exists server-wide; right-click wind burst power 5; shift-right-click ground slam; base damage ~9 hearts; admin perm quacke.admin.">Quacke Mace</div>
+    <div class="chip" data-text="Unity (GTag): C# MonoBehaviour that toggles Ghost Monkey and SnowballSpam via wrist UI; Photon PUN 2 safe RPCs.">GTag wrist toggle</div>
+  </div>
+
+  <div class="row-grid mini">
+    <div><b>Tip:</b> This is offline. It uses rules to build code. Extend rules inside the script.</div>
+    <div><b>Voice:</b> It will auto-read results. Turn off your tab’s sound if you hate fun.</div>
   </div>
 </div>
 
 <script>
-const WORKER_URL = "https://YOUR_WORKER.workers.dev"; // 👈 replace
-const $=s=>document.querySelector(s),statusEl=$("#status"),chat=$("#chat"),input=$("#in"),btn=$("#send"),mouth=$("#mouth");
-function add(role,text){const row=document.createElement("div");row.className="row "+role;const msg=document.createElement("div");msg.className="msg";msg.textContent=text;row.appendChild(msg);chat.appendChild(row);chat.scrollTop=chat.scrollHeight;return msg;}
-function speak(t){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);let flip=false;u.onstart=()=>{talk=setInterval(()=>{flip=!flip;mouth.classList.toggle("talk",flip)},100)};u.onend=()=>{clearInterval(talk);mouth.classList.remove("talk")};speechSynthesis.speak(u);}
-async function callAI(text){const r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:[{role:"system",content:"You are a coding helper for Minecraft Skript and Gorilla Tag Unity."},{role:"user",content:text}]})});const d=await r.json();return d.text||"error";}
-btn.onclick=async()=>{const t=input.value.trim();if(!t)return;input.value="";add("mine",t);const m=add("theirs","…thinking…");statusEl.textContent="asking…";try{const reply=await callAI(t);m.textContent=reply;speak(reply);statusEl.textContent="done"}catch(e){m.textContent="err: "+e.message;statusEl.textContent="fail"}};
+/* ====== tiny utilities ====== */
+const $=s=>document.querySelector(s);
+const statusEl=$("#status"), chatEl=$("#chat"), input=$("#in"), sendBtn=$("#send"), mouth=$("#mouth");
+function addBubble(role,text){const row=document.createElement("div");row.className="row"+(role==="user"?" me":"");const msg=document.createElement("div");msg.className="msg";msg.innerHTML=text;row.appendChild(msg);chatEl.appendChild(row);chatEl.scrollTop=chatEl.scrollHeight;return msg;}
+function escapeHtml(s){return String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));}
+function codeBlock(lang,code){return `<pre class="code"><code data-lang="${lang}">${escapeHtml(code)}</code></pre>`;}
+function note(t){statusEl.textContent=t;}
+
+/* ====== entrance fx ====== */
+const rig=$("#rig"), shadow=$("#shadow");
+let landed=false;
+rig.addEventListener("animationend",(e)=>{ if(!landed && e.animationName==="drop"){ landed=true; rig.classList.add("land"); $("#stage").classList.add("shake"); shadow.style.opacity=.85; setTimeout(()=>$("#stage").classList.remove("shake"),260); }});
+
+/* ====== TTS lip-sync ====== */
+let voices=[],talking=null;
+function loadVoices(){voices=speechSynthesis.getVoices().filter(v=>v.lang.startsWith("en"));} loadVoices(); speechSynthesis.onvoiceschanged=loadVoices;
+function speak(text){ if(!text) return; speechSynthesis.cancel(); clearInterval(talking); mouth.classList.remove("talk");
+  const u=new SpeechSynthesisUtterance(text); if(voices[0]) u.voice=voices[0];
+  u.onstart=()=>{let open=false; talking=setInterval(()=>{open=!open; mouth.classList.toggle("talk",open);},90)};
+  u.onboundary=e=>{if(e.name==="word"||e.charIndex%5===0) mouth.classList.toggle("talk")};
+  u.onend=()=>{clearInterval(talking); mouth.classList.remove("talk")};
+  speechSynthesis.speak(u);
+}
+
+/* ====== RULE ENGINE ======
+   We parse the user's request to produce Skript or Unity C# templates.
+   Extend the patterns below to add more behaviors.
+*/
+function parseNumber(s, def){const m=String(s).match(/(\d+(\.\d+)?)/); return m? Number(m[1]) : def;}
+function has(s,kw){return new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\\]\\\\]/g,"\\\\$&")}\\b`,"i").test(s);}
+function grabPerm(s){const m=s.match(/\bperm(?:ission)?\s+([a-z0-9\.\-_:]+)/i); return m? m[1] : null;}
+function grabCmd(s){const m=s.match(/\/([a-z0-9_:-]{1,32})/i); return m? m[1] : "echo";}
+
+function buildSkript(input){
+  const cmd = grabCmd(input);
+  const perm = grabPerm(input) || `echo.${cmd}`;
+  const cooldownSec = /cooldown/i.test(input) ? parseNumber(input,5) : 0;
+  const denyHeart = /heart/i.test(input) ? true : false;
+  const maxDup = /up to\s+(\d+)/i.test(input) ? parseInt(input.match(/up to\s+(\d+)/i)[1],10) : 1;
+  const blockCMD = /custom model data\s*(?:is|=)?\s*(\d+)/i;
+  const blockedCMD = blockCMD.test(input) ? parseInt(input.match(blockCMD)[1],10) : null;
+
+  let pre = `# Echo-AI offline template
+# Server: Paper/Purpur 1.21.x, Skript + SkBee optional
+# Command: /${cmd}, permission: ${perm}
+`;
+  let lines = [];
+  lines.push(`command /${cmd}:`);
+  lines.push(`  permission: ${perm}`);
+  lines.push(`  permission message: &cNo permission (&7${perm}&c).`);
+  lines.push(`  trigger:`);
+
+  if (cooldownSec>0){
+    lines.push(`    if {cd.${cmd}::%player%} is set:`);
+    lines.push(`      send "&cWait ${cooldownSec}s between uses." to player`);
+    lines.push(`      stop`);
+    lines.push(`    set {cd.${cmd}::%player%} to true`);
+    lines.push(`    delete {cd.${cmd}::%player%} in ${cooldownSec} seconds`);
+  }
+
+  lines.push(`    set {_it} to player's tool`);
+
+  if (denyHeart){
+    lines.push(`    if "%name of {_it}%" contains "Heart":`);
+    lines.push(`      send "&cThat item is blocked." to player`);
+    lines.push(`      stop`);
+  }
+  if (blockedCMD !== null){
+    lines.push(`    set {_cmd} to nbt compound of {_it}`);
+    lines.push(`    if "%{_cmd}%" contains "CustomModelData:${blockedCMD}":`);
+    lines.push(`      send "&cThis CustomModelData is blocked." to player`);
+    lines.push(`      stop`);
+  }
+
+  lines.push(`    if {_it} is air:`);
+  lines.push(`      send "&cHold an item." to player`);
+  lines.push(`      stop`);
+
+  lines.push(`    loop ${maxDup - 1 < 0 ? 0 : maxDup - 1} times:`);
+  lines.push(`      give player {_it}`);
+
+  lines.push(`    send "&aDuplicated &fx${maxDup}&a of &f%name of {_it}%&a." to player`);
+
+  return pre + "\n" + lines.join("\n");
+}
+
+function buildUnityGTag(input){
+  const ghost = has(input,"ghost")||has(input,"invisible");
+  const snow = /snowball/i.test(input);
+  const className = "WristToggles";
+  const rpcName = "RPC_Toggle";
+  let pre = `// Echo-AI offline template
+// Unity 2021.3.x, Gorilla Tag mod (concept), Photon PUN 2 safe pattern
+// Attach to wrist UI button(s). Uses simple RPC debounce.
+using UnityEngine;
+using Photon.Pun;
+
+public class ${className} : MonoBehaviourPun
+{
+    [SerializeField] private KeyCode ghostKey = KeyCode.G;
+    [SerializeField] private KeyCode snowSpamKey = KeyCode.H;
+    [SerializeField] private float rpcCooldown = 0.25f;
+    private float _lastRpc;
+
+    void Update()
+    {
+        if (Input.GetKeyDown(ghostKey)) ToggleGhost();
+        if (Input.GetKeyDown(snowSpamKey)) ToggleSnow();
+    }
+
+    void ToggleGhost()
+    {
+        if (Time.time - _lastRpc < rpcCooldown) return;
+        _lastRpc = Time.time;
+        photonView.RPC("${rpcName}", RpcTarget.All, "ghost");
+    }
+
+    void ToggleSnow()
+    {
+        if (Time.time - _lastRpc < rpcCooldown) return;
+        _lastRpc = Time.time;
+        photonView.RPC("${rpcName}", RpcTarget.All, "snow");
+    }
+
+    [PunRPC]
+    void ${rpcName}(string mode)
+    {
+        if (mode == "ghost")
+        {
+            // TODO: flip layers/materials; ensure server/community rules
+            Debug.Log("[Echo] Ghost toggled");
+        }
+        else if (mode == "snow")
+        {
+            // TODO: spawn snowball safely with rate limit
+            Debug.Log("[Echo] Snow spam toggled");
+        }
+    }
+}
+`;
+  // Nudge based on request
+  if (!ghost && !snow) pre += `// Hint: Press G for 'ghost', H for 'snow spam'. Change keys as needed.\n`;
+  return pre;
+}
+
+/* Dispatcher */
+function generateOffline(text){
+  const t = text.trim();
+  const lower = t.toLowerCase();
+  let out = "";
+
+  // detect mode
+  const wantsSkript = /skript|\/[a-z0-9_:-]+|cooldown|permission|custom model data|cmd|dup|duplicate/.test(lower);
+  const wantsUnity = /(unity|gtag|gorilla|c#|monobehaviour|pun|photon)/.test(lower);
+
+  if (wantsSkript && !wantsUnity){
+    out = buildSkript(t);
+    return { lang:"skript", out };
+  }
+  if (wantsUnity && !wantsSkript){
+    out = buildUnityGTag(t);
+    return { lang:"csharp", out };
+  }
+  // If both or unclear, try skript first
+  if (wantsSkript && wantsUnity){
+    out = buildSkript(t) + "\n\n/* --- Unity version suggestion below --- */\n\n" + buildUnityGTag(t);
+    return { lang:"txt", out };
+  }
+  // Fallback generic helper
+  out = `# Echo-AI offline template\n# Describe either Skript (permissions, cooldown, /command) or Unity (GTag, PUN2).\n# Example:\n# Skript: /dupe up to 4; block &cHeart; 5s cooldown; perm echo.dupe.\n# Unity: wrist toggle ghost + snowball spam with Photon PUN safe RPCs.\n`;
+  return { lang:"txt", out };
+}
+
+/* ====== UI wire-up ====== */
+function renderMarkdownLite(text){
+  // just wrap code in triple fences if we know lang
+  return text.replace(/```([\s\S]*?)```/g, (m)=>m);
+}
+
+sendBtn.addEventListener("click", ()=>{
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = "";
+  addBubble("user", escapeHtml(text));
+
+  const res = generateOffline(text);
+  const html = `<b>Echo:</b> ${codeBlock(res.lang, res.out)}`;
+  const msg = addBubble("assistant", html);
+  speak(res.out.slice(0, 240)); // read first chunk to avoid droning forever
+  note("Generated offline.");
+});
+
+input.addEventListener("keydown", e=>{
+  if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendBtn.click(); }
+});
+
+document.querySelectorAll(".chip").forEach(ch=> ch.addEventListener("click", ()=>{ input.value = ch.dataset.text; input.focus(); }));
+
 </script>
 </body>
 </html>
