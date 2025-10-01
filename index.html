@@ -3,64 +3,78 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Echo-AI (Offline, One File)</title>
+<title>Echo-AI — Ralfy (Local WebLLM, no CDN)</title>
 <style>
-  :root{--bg:#0b0f14;--ink:#e8eef9;--muted:#9aa6bb;--line:#20304a;--hi:#6ee7ff;--hi2:#8b5cf6;
+  :root{--bg:#0b0f14;--ink:#e8eef9;--muted:#9aa6bb;--line:#213047;--hi:#6ee7ff;--hi2:#8b5cf6;
         --skin:#f1c38a;--hair:#322214;--shirt:#2b3560;--strap:#303a58;--mouth:#3b0d0d;--tongue:#b45555;--teeth:#fff}
-  *{box-sizing:border-box} body{margin:0;background:#0b0f14;color:var(--ink);font:14px system-ui,Segoe UI,Roboto,Arial}
-  .wrap{max-width:920px;margin:0 auto;padding:14px}
+  *{box-sizing:border-box} body{margin:0;background:radial-gradient(1200px 700px at 10% -10%,#15233b 0%,#0b0f14 45% 100%);color:var(--ink);font:14px/1.45 system-ui,Segoe UI,Roboto,Arial}
+  .wrap{max-width:960px;margin:0 auto;padding:16px}
   header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-  h1{margin:0;font-size:18px}
-  .sub{font-size:12px;color:var(--muted)}
-  .status{font-size:12px;color:#a9b5c9;margin-top:6px}
-  .stage{position:relative;height:420px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(#0e1523 0 48%,#0b0f14 48%);overflow:hidden;margin-top:12px}
-  .shadow{position:absolute;left:50%;bottom:70px;transform:translateX(-50%);width:180px;height:22px;background:radial-gradient(closest-side,#0006,#0000);filter:blur(4px);opacity:0}
-  .rig{position:absolute;left:50%;top:-380px;transform:translateX(-50%);width:220px;height:380px;pointer-events:none;
-       animation:drop 2.0s cubic-bezier(.2,.8,.1,1) forwards,sway 2.0s ease-in-out}
-  @keyframes sway{0%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 24px)) rotate(-3.5deg)}50%{transform:translateX(-50%)}75%{transform:translateX(calc(-50% + 24px)) rotate(3.5deg)}100%{transform:translateX(-50%)}}
-  @keyframes drop{0%{top:-380px}70%{top:250px}82%{top:236px}100%{top:242px}}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{width:28px;height:28px;border-radius:8px;background:conic-gradient(from 0deg,var(--hi),var(--hi2),var(--hi));box-shadow:0 0 22px #6ee7ff55 inset,0 0 30px #8b5cf644}
+  h1{font-size:18px;margin:0}.sub{font-size:12px;color:var(--muted)}
+  .stage{position:relative;height:520px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(#0e1523 0 40%,#0b0f14 40% 100%);overflow:hidden;margin-top:12px}
+  .ground{position:absolute;inset:auto 0 0 0;height:90px;background:radial-gradient(800px 120px at 50% 0%,#101829 0%,#0c101b 60%,#0b0f14 100%);border-top:1px solid #1e2a47}
+  .shadow{position:absolute;left:50%;bottom:78px;transform:translateX(-50%);width:180px;height:22px;background:radial-gradient(closest-side,#00000055,#0000);filter:blur(4px);opacity:0}
+  .rig{position:absolute;left:50%;top:-420px;transform:translateX(-50%);width:240px;height:420px;pointer-events:none;animation:drop-in 2.1s cubic-bezier(.2,.8,.1,1) forwards,sway 2.1s ease-in-out}
+  @keyframes sway{0%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 26px)) rotate(-3.5deg)}50%{transform:translateX(-50%)}75%{transform:translateX(calc(-50% + 26px)) rotate(3.5deg)}100%{transform:translateX(-50%)}}
+  @keyframes drop-in{0%{top:-420px}70%{top:290px}82%{top:275px}100%{top:282px}}
   .land{animation:thump .25s ease-out}@keyframes thump{0%{transform:translateX(-50%) scale(1)}50%{transform:translateX(calc(-50% - 2px)) scale(1.04,.96)}100%{transform:translateX(-50%) scale(1)}}
   .shake{animation:shake .18s linear 2}@keyframes shake{0%{transform:translateX(0)}25%{transform:translateX(2px)}50%{transform:translateX(-2px)}75%{transform:translateX(1px)}100%{transform:translateX(0)}}
   .mouth{transform-origin:50% 0%;transition:transform .06s linear}.talk{transform:scaleY(1.35)}
-  .ground{position:absolute;left:0;right:0;bottom:0;height:80px;background:radial-gradient(800px 120px at 50% 0%,#101829 0%,#0c101b 60%,#0b0f14 100%);border-top:1px solid #1e2a47}
   .card{background:#0f1625;border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:12px}
+  .chat{height:240px;overflow:auto;padding:12px}
+  .row{display:flex;gap:10px;margin:8px 0}.me{justify-content:flex-end}
+  .msg{max-width:80%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;white-space:pre-wrap;word-wrap:anywhere}
+  .mine{background:#1b2742}.theirs{background:#141b2c}
+  .code{display:block;background:#0b1120;border:1px solid #1a2742;border-radius:10px;padding:8px;overflow:auto;margin:8px 0}
   .toolbar{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:#0d1424}
   textarea{flex:1;min-height:64px;background:#0e1626;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px}
-  button{padding:9px 12px;border:none;border-radius:10px;background:linear-gradient(90deg,var(--hi2),var(--hi));color:#061019;font-weight:800;cursor:pointer}
-  .chat{height:220px;overflow:auto;padding:12px}
-  .row{display:flex;margin:8px 0}
-  .row.me{justify-content:flex-end}
-  .msg{max-width:80%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#141b2c;white-space:pre-wrap;word-wrap:anywhere}
-  .row.me .msg{background:#1b2742}
-  .code{display:block;background:#0b1120;border:1px solid #1a2742;border-radius:10px;padding:8px;overflow:auto;margin:8px 0}
+  button,select{border-radius:10px;border:1px solid var(--line);background:#0e1626;color:var(--ink);padding:9px 12px;cursor:pointer}
+  .action{background:linear-gradient(90deg,var(--hi2),var(--hi));color:#061019;border:none;font-weight:800}
   .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
   .chip{padding:6px 10px;border:1px solid var(--line);background:#0e1420;border-radius:999px;color:#a8b3c6;cursor:pointer}
-  .row-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .mini{font-size:12px;color:#a9b5c9}
+  .status{font-size:12px;color:#a9b5c9;margin-top:6px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div>
-      <h1>Echo-AI (Offline)</h1>
-      <div class="sub">One file. No keys, no CDNs. Rule-based generator for Skript & GTag/Unity.</div>
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>Echo-AI — Ralfy (Local)</h1>
+        <div class="sub">No CDN. Load a local model → Send. Optional proxy fallback only if you set one.</div>
+      </div>
     </div>
-    <div id="status" class="status">Ready.</div>
+    <div class="bar">
+      <select id="model">
+        <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5-mini (smallest)</option>
+        <option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC">Qwen2.5-Coder-1.5B (code)</option>
+        <option value="Llama-3.1-3B-Instruct-q4f16_1-MLC">Llama-3.1-3B</option>
+      </select>
+      <button id="load" class="action">Load Model</button>
+    </div>
   </header>
 
   <div class="stage" id="stage">
     <div class="shadow" id="shadow"></div>
     <div class="rig" id="rig" aria-label="Ralfy">
-      <svg id="ralfy" viewBox="0 0 260 300" width="220" style="display:block;margin:50px auto 0">
+      <svg viewBox="0 0 280 220" width="240" style="display:block;margin:0 auto">
+        <path d="M20,110 C50,10 230,10 260,110 Q140,160 20,110 Z" fill="#6bb0ff" stroke="#2b3d62" stroke-width="3"/>
+        <path d="M80,40 Q140,70 200,40" stroke="#35527e" stroke-width="2" fill="none" opacity=".7"/>
+        <path d="M50,70 Q140,90 230,70" stroke="#35527e" stroke-width="2" fill="none" opacity:.7/>
+        <g fill="none" stroke="#bcd4ff" stroke-width="2">
+          <path d="M60,110 L90,200"/><path d="M110,120 L120,200"/><path d="M170,120 L160,200"/><path d="M220,110 L190,200"/>
+        </g>
+      </svg>
+      <svg id="ralfy" viewBox="0 0 260 300" width="240" style="display:block;margin:-10px auto 0">
+        <rect x="110" y="130" width="12" height="80" rx="6" fill="var(--strap)"/><rect x="138" y="130" width="12" height="80" rx="6" fill="var(--strap)"/>
         <ellipse cx="130" cy="120" rx="82" ry="88" fill="var(--skin)" stroke="#00000022" stroke-width="2"/>
         <ellipse cx="130" cy="76" rx="86" ry="58" fill="var(--hair)"/>
-        <ellipse cx="48" cy="122" rx="16" ry="20" fill="var(--skin)"/>
-        <ellipse cx="212" cy="122" rx="16" ry="20" fill="var(--skin)"/>
-        <ellipse cx="100" cy="114" rx="16" ry="14" fill="#fff"/>
-        <ellipse cx="160" cy="114" rx="16" ry="14" fill="#fff"/>
-        <circle cx="104" cy="116" r="4" fill="#1c2440"/>
-        <circle cx="164" cy="116" r="4" fill="#1c2440"/>
+        <ellipse cx="48" cy="122" rx="16" ry="20" fill="var(--skin)"/><ellipse cx="212" cy="122" rx="16" ry="20" fill="var(--skin)"/>
+        <ellipse cx="100" cy="114" rx="16" ry="14" fill="#fff"/><ellipse cx="160" cy="114" rx="16" ry="14" fill="#fff"/>
+        <circle cx="104" cy="116" r="4" fill="#1c2440"/><circle cx="164" cy="116" r="4" fill="#1c2440"/>
         <path d="M128,128 q4,10 0,16" stroke="#8f6b3c" stroke-width="3" fill="none" stroke-linecap="round"/>
         <g id="mouthGroup">
           <path id="mouth" class="mouth" d="M98,152 q32,22 64,0 q-8,18 -32,18 q-24,0 -32,-18 Z" fill="var(--mouth)"/>
@@ -68,8 +82,7 @@
           <ellipse cx="130" cy="170" rx="18" ry="8" fill="var(--tongue)" opacity=".8"/>
         </g>
         <rect x="80" y="190" width="100" height="86" rx="18" fill="var(--shirt)"/>
-        <rect x="90" y="274" width="26" height="18" rx="6" fill="#1e2748"/>
-        <rect x="144" y="274" width="26" height="18" rx="6" fill="#1e2748"/>
+        <rect x="90" y="274" width="26" height="18" rx="6" fill="#1e2748"/><rect x="144" y="274" width="26" height="18" rx="6" fill="#1e2748"/>
       </svg>
     </div>
     <div class="ground"></div>
@@ -79,221 +92,131 @@
     <div id="chat" class="chat"></div>
     <div class="toolbar">
       <textarea id="in" placeholder="e.g., Skript: /dupe up to 4; block &cHeart; 5s cooldown; perm echo.dupe."></textarea>
-      <button id="send">Generate</button>
+      <button id="send" class="action">Send</button>
     </div>
   </div>
 
   <div class="chips">
-    <div class="chip" data-text="Skript: command /dupe that duplicates held item up to 4; deny if item's name contains &cHeart or if custom model data is 123. Include 5s cooldown and permission echo.dupe.">/dupe example</div>
-    <div class="chip" data-text="Skript: Only one 'Quacke Mace' exists server-wide; right-click wind burst power 5; shift-right-click ground slam; base damage ~9 hearts; admin perm quacke.admin.">Quacke Mace</div>
-    <div class="chip" data-text="Unity (GTag): C# MonoBehaviour that toggles Ghost Monkey and SnowballSpam via wrist UI; Photon PUN 2 safe RPCs.">GTag wrist toggle</div>
+    <div class="chip" data-text="Skript: command /dupe that duplicates held item up to 4; deny if item's name contains &cHeart or if custom model data is 123. Include cooldown 5s and permission echo.dupe.">/dupe up to 4 + block hearts</div>
+    <div class="chip" data-text="Skript: 'Quacke Mace' with right-click wind burst (level 5), shift-right-click ground slam; base damage ~9 hearts; only one exists server-wide; crafting recipe; admin bypass perm quacke.admin.">Quacke Mace</div>
+    <div class="chip" data-text="Unity (GTag): C# MonoBehaviour that toggles Ghost Monkey + Snowball Spam via wrist UI; Photon PUN 2 safe RPCs.">GTag wrist toggle</div>
   </div>
 
-  <div class="row-grid mini">
-    <div><b>Tip:</b> This is offline. It uses rules to build code. Extend rules inside the script.</div>
-    <div><b>Voice:</b> It will auto-read results. Turn off your tab’s sound if you hate fun.</div>
-  </div>
+  <div class="status" id="status">Ready. Click “Load Model”. Open your GitHub Pages URL directly (not embedded).</div>
 </div>
 
+<!-- LOCAL-ONLY: ship web-llm.umd.min.js in your repo at /lib/ -->
+<script src="./lib/web-llm.umd.min.js"></script>
+
 <script>
-/* ====== tiny utilities ====== */
+/* ========== OPTIONAL PROXY FALLBACK (leave blank to ignore) ========== */
+const WORKER_URL = ""; // e.g. "https://echo-ai-proxy.yourname.workers.dev" (optional)
+
+/* ========== DOM + UI ========== */
 const $=s=>document.querySelector(s);
-const statusEl=$("#status"), chatEl=$("#chat"), input=$("#in"), sendBtn=$("#send"), mouth=$("#mouth");
-function addBubble(role,text){const row=document.createElement("div");row.className="row"+(role==="user"?" me":"");const msg=document.createElement("div");msg.className="msg";msg.innerHTML=text;row.appendChild(msg);chatEl.appendChild(row);chatEl.scrollTop=chatEl.scrollHeight;return msg;}
-function escapeHtml(s){return String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));}
-function codeBlock(lang,code){return `<pre class="code"><code data-lang="${lang}">${escapeHtml(code)}</code></pre>`;}
-function note(t){statusEl.textContent=t;}
+const chatEl=$("#chat"), inputEl=$("#in"), sendBtn=$("#send");
+const modelEl=$("#model"), loadBtn=$("#load"), statusEl=$("#status");
+const rig=$("#rig"), shadow=$("#shadow"), mouth=$("#mouth");
+function note(m){ statusEl.textContent=m; console.log("[Echo-AI]",m); }
+function escapeHtml(s){return String(s).replace(/[<>&]/g,c=>({ '<':'&lt;','>':'&gt;','&':'&amp;' }[c]));}
+function mdLite(t){ const parts=String(t).split(/```/); let out=""; for(let i=0;i<parts.length;i++){ if(i%2===0) out+=escapeHtml(parts[i]).replace(/\n/g,"<br>"); else{ const nl=parts[i].indexOf("\n"); let lang="txt",code=parts[i]; if(nl!==-1){ lang=parts[i].slice(0,nl).trim()||"txt"; code=parts[i].slice(nl+1);} out+=`<pre class="code"><code data-lang="${lang}">${escapeHtml(code)}</code></pre>`; } } return out;}
+function addBubble(role,text){ const row=document.createElement("div"); row.className="row"+(role==="user"?" me":""); const msg=document.createElement("div"); msg.className="msg "+(role==="user"?"mine":"theirs"); msg.innerHTML=mdLite(text); row.appendChild(msg); chatEl.appendChild(row); chatEl.scrollTop=chatEl.scrollHeight; return msg; }
 
-/* ====== entrance fx ====== */
-const rig=$("#rig"), shadow=$("#shadow");
+/* ========== Landing FX + TTS ========== */
 let landed=false;
-rig.addEventListener("animationend",(e)=>{ if(!landed && e.animationName==="drop"){ landed=true; rig.classList.add("land"); $("#stage").classList.add("shake"); shadow.style.opacity=.85; setTimeout(()=>$("#stage").classList.remove("shake"),260); }});
-
-/* ====== TTS lip-sync ====== */
-let voices=[],talking=null;
-function loadVoices(){voices=speechSynthesis.getVoices().filter(v=>v.lang.startsWith("en"));} loadVoices(); speechSynthesis.onvoiceschanged=loadVoices;
-function speak(text){ if(!text) return; speechSynthesis.cancel(); clearInterval(talking); mouth.classList.remove("talk");
-  const u=new SpeechSynthesisUtterance(text); if(voices[0]) u.voice=voices[0];
-  u.onstart=()=>{let open=false; talking=setInterval(()=>{open=!open; mouth.classList.toggle("talk",open);},90)};
-  u.onboundary=e=>{if(e.name==="word"||e.charIndex%5===0) mouth.classList.toggle("talk")};
-  u.onend=()=>{clearInterval(talking); mouth.classList.remove("talk")};
+rig.addEventListener("animationend",(e)=>{ if(e.animationName==="drop-in" && !landed){ landed=true; rig.classList.add("land"); $("#stage").classList.add("shake"); shadow.style.opacity=.85; setTimeout(()=>$("#stage").classList.remove("shake"),260); }});
+let voices=[],talking=null,lastReply="";
+function loadVoices(){ voices=speechSynthesis.getVoices().filter(v=>v.lang.startsWith("en")); }
+speechSynthesis.onvoiceschanged=loadVoices; loadVoices();
+function speak(text){ if(!text) text=lastReply; if(!text) return;
+  speechSynthesis.cancel(); clearInterval(talking); mouth.classList.remove("talk");
+  const u=new SpeechSynthesisUtterance(text); if(voices.length) u.voice=voices[0];
+  u.onstart=()=>{ let open=false; talking=setInterval(()=>{ open=!open; mouth.classList.toggle("talk",open); }, 90); };
+  u.onboundary=(ev)=>{ if(ev.name==='word'||ev.charIndex%5===0) mouth.classList.toggle('talk'); };
+  u.onend=()=>{ clearInterval(talking); mouth.classList.remove('talk'); };
   speechSynthesis.speak(u);
 }
 
-/* ====== RULE ENGINE ======
-   We parse the user's request to produce Skript or Unity C# templates.
-   Extend the patterns below to add more behaviors.
-*/
-function parseNumber(s, def){const m=String(s).match(/(\d+(\.\d+)?)/); return m? Number(m[1]) : def;}
-function has(s,kw){return new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\\]\\\\]/g,"\\\\$&")}\\b`,"i").test(s);}
-function grabPerm(s){const m=s.match(/\bperm(?:ission)?\s+([a-z0-9\.\-_:]+)/i); return m? m[1] : null;}
-function grabCmd(s){const m=s.match(/\/([a-z0-9_:-]{1,32})/i); return m? m[1] : "echo";}
+/* ========== Local WebLLM (no key) ========== */
+let engine=null;
+const system=[{role:"system",content:
+`You are a focused coding helper for Minecraft Skript (Minehut/Purpur/1.21.x, SkBee) and Gorilla Tag/Unity 2021.3.21f1 (Photon PUN 2, PlayFab).
+Return concise, copy-pasteable code blocks in triple backticks. Avoid deprecated Skript syntaxes.`}];
 
-function buildSkript(input){
-  const cmd = grabCmd(input);
-  const perm = grabPerm(input) || `echo.${cmd}`;
-  const cooldownSec = /cooldown/i.test(input) ? parseNumber(input,5) : 0;
-  const denyHeart = /heart/i.test(input) ? true : false;
-  const maxDup = /up to\s+(\d+)/i.test(input) ? parseInt(input.match(/up to\s+(\d+)/i)[1],10) : 1;
-  const blockCMD = /custom model data\s*(?:is|=)?\s*(\d+)/i;
-  const blockedCMD = blockCMD.test(input) ? parseInt(input.match(blockCMD)[1],10) : null;
+function webllmLoaded(){ return !!window.webllm; }
 
-  let pre = `# Echo-AI offline template
-# Server: Paper/Purpur 1.21.x, Skript + SkBee optional
-# Command: /${cmd}, permission: ${perm}
-`;
-  let lines = [];
-  lines.push(`command /${cmd}:`);
-  lines.push(`  permission: ${perm}`);
-  lines.push(`  permission message: &cNo permission (&7${perm}&c).`);
-  lines.push(`  trigger:`);
-
-  if (cooldownSec>0){
-    lines.push(`    if {cd.${cmd}::%player%} is set:`);
-    lines.push(`      send "&cWait ${cooldownSec}s between uses." to player`);
-    lines.push(`      stop`);
-    lines.push(`    set {cd.${cmd}::%player%} to true`);
-    lines.push(`    delete {cd.${cmd}::%player%} in ${cooldownSec} seconds`);
-  }
-
-  lines.push(`    set {_it} to player's tool`);
-
-  if (denyHeart){
-    lines.push(`    if "%name of {_it}%" contains "Heart":`);
-    lines.push(`      send "&cThat item is blocked." to player`);
-    lines.push(`      stop`);
-  }
-  if (blockedCMD !== null){
-    lines.push(`    set {_cmd} to nbt compound of {_it}`);
-    lines.push(`    if "%{_cmd}%" contains "CustomModelData:${blockedCMD}":`);
-    lines.push(`      send "&cThis CustomModelData is blocked." to player`);
-    lines.push(`      stop`);
-  }
-
-  lines.push(`    if {_it} is air:`);
-  lines.push(`      send "&cHold an item." to player`);
-  lines.push(`      stop`);
-
-  lines.push(`    loop ${maxDup - 1 < 0 ? 0 : maxDup - 1} times:`);
-  lines.push(`      give player {_it}`);
-
-  lines.push(`    send "&aDuplicated &fx${maxDup}&a of &f%name of {_it}%&a." to player`);
-
-  return pre + "\n" + lines.join("\n");
-}
-
-function buildUnityGTag(input){
-  const ghost = has(input,"ghost")||has(input,"invisible");
-  const snow = /snowball/i.test(input);
-  const className = "WristToggles";
-  const rpcName = "RPC_Toggle";
-  let pre = `// Echo-AI offline template
-// Unity 2021.3.x, Gorilla Tag mod (concept), Photon PUN 2 safe pattern
-// Attach to wrist UI button(s). Uses simple RPC debounce.
-using UnityEngine;
-using Photon.Pun;
-
-public class ${className} : MonoBehaviourPun
-{
-    [SerializeField] private KeyCode ghostKey = KeyCode.G;
-    [SerializeField] private KeyCode snowSpamKey = KeyCode.H;
-    [SerializeField] private float rpcCooldown = 0.25f;
-    private float _lastRpc;
-
-    void Update()
-    {
-        if (Input.GetKeyDown(ghostKey)) ToggleGhost();
-        if (Input.GetKeyDown(snowSpamKey)) ToggleSnow();
-    }
-
-    void ToggleGhost()
-    {
-        if (Time.time - _lastRpc < rpcCooldown) return;
-        _lastRpc = Time.time;
-        photonView.RPC("${rpcName}", RpcTarget.All, "ghost");
-    }
-
-    void ToggleSnow()
-    {
-        if (Time.time - _lastRpc < rpcCooldown) return;
-        _lastRpc = Time.time;
-        photonView.RPC("${rpcName}", RpcTarget.All, "snow");
-    }
-
-    [PunRPC]
-    void ${rpcName}(string mode)
-    {
-        if (mode == "ghost")
-        {
-            // TODO: flip layers/materials; ensure server/community rules
-            Debug.Log("[Echo] Ghost toggled");
-        }
-        else if (mode == "snow")
-        {
-            // TODO: spawn snowball safely with rate limit
-            Debug.Log("[Echo] Snow spam toggled");
-        }
-    }
-}
-`;
-  // Nudge based on request
-  if (!ghost && !snow) pre += `// Hint: Press G for 'ghost', H for 'snow spam'. Change keys as needed.\n`;
-  return pre;
-}
-
-/* Dispatcher */
-function generateOffline(text){
-  const t = text.trim();
-  const lower = t.toLowerCase();
-  let out = "";
-
-  // detect mode
-  const wantsSkript = /skript|\/[a-z0-9_:-]+|cooldown|permission|custom model data|cmd|dup|duplicate/.test(lower);
-  const wantsUnity = /(unity|gtag|gorilla|c#|monobehaviour|pun|photon)/.test(lower);
-
-  if (wantsSkript && !wantsUnity){
-    out = buildSkript(t);
-    return { lang:"skript", out };
-  }
-  if (wantsUnity && !wantsSkript){
-    out = buildUnityGTag(t);
-    return { lang:"csharp", out };
-  }
-  // If both or unclear, try skript first
-  if (wantsSkript && wantsUnity){
-    out = buildSkript(t) + "\n\n/* --- Unity version suggestion below --- */\n\n" + buildUnityGTag(t);
-    return { lang:"txt", out };
-  }
-  // Fallback generic helper
-  out = `# Echo-AI offline template\n# Describe either Skript (permissions, cooldown, /command) or Unity (GTag, PUN2).\n# Example:\n# Skript: /dupe up to 4; block &cHeart; 5s cooldown; perm echo.dupe.\n# Unity: wrist toggle ghost + snowball spam with Photon PUN safe RPCs.\n`;
-  return { lang:"txt", out };
-}
-
-/* ====== UI wire-up ====== */
-function renderMarkdownLite(text){
-  // just wrap code in triple fences if we know lang
-  return text.replace(/```([\s\S]*?)```/g, (m)=>m);
-}
-
-sendBtn.addEventListener("click", ()=>{
-  const text = input.value.trim();
-  if(!text) return;
-  input.value = "";
-  addBubble("user", escapeHtml(text));
-
-  const res = generateOffline(text);
-  const html = `<b>Echo:</b> ${codeBlock(res.lang, res.out)}`;
-  const msg = addBubble("assistant", html);
-  speak(res.out.slice(0, 240)); // read first chunk to avoid droning forever
-  note("Generated offline.");
+loadBtn.addEventListener("click", async ()=>{
+  if(!webllmLoaded()){ note("WebLLM script not found. Ensure /lib/web-llm.umd.min.js exists in your repo."); return; }
+  const { CreateMLCEngine, prebuiltAppConfig } = window.webllm;
+  const modelId = modelEl.value;
+  note(`Loading ${modelId}…`);
+  sendBtn.disabled=true;
+  try{
+    engine = await CreateMLCEngine(modelId, { appConfig: prebuiltAppConfig, useWebWorker:false, gpu:true },
+      (p)=> note(`${p.text} ${Math.round(p.progress*100)}%`));
+    note(`Loaded ${modelId}. Type and hit Send.`);
+    inputEl.focus(); sendBtn.disabled=false;
+  }catch(e){ console.error(e); note(`Load error: ${e.message}`); }
 });
 
-input.addEventListener("keydown", e=>{
-  if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendBtn.click(); }
+async function runLocal(messages){
+  // Try modern API
+  try{
+    if (engine?.chat?.completions?.create){
+      const out = await engine.chat.completions.create({ messages, temperature:0.2, max_tokens:900, max_new_tokens:900, stream:false });
+      const text = out?.choices?.[0]?.message?.content; if (text) return text;
+    }
+  }catch(e){ console.warn("chat.completions fallback →", e); }
+  // Fallback (older builds)
+  if (typeof engine?.generate === "function"){
+    const prompt = messages.map(m=>`${m.role.toUpperCase()}: ${m.content}`).join("\n")+"\nASSISTANT:";
+    const out = await engine.generate(prompt, { temperature:0.2, max_tokens:900 });
+    return out?.output_text || (typeof out==="string" ? out : null);
+  }
+  throw new Error("No compatible WebLLM method found.");
+}
+
+/* ========== OPTIONAL proxy fallback (only if WORKER_URL is set) ========== */
+async function runProxy(userText){
+  if (!WORKER_URL) throw new Error("Proxy disabled.");
+  const r = await fetch(WORKER_URL, { method:"POST", headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ messages: system.concat({role:"user",content:userText}) }) });
+  const raw = await r.text();
+  if (!r.ok) throw new Error(`HTTP ${r.status}: ${raw}`);
+  let data; try{ data = JSON.parse(raw); }catch{ throw new Error("Bad JSON from proxy"); }
+  return data?.text || "No response.";
+}
+
+/* ========== Send flow ========== */
+sendBtn.addEventListener("click", async ()=>{
+  const text = inputEl.value.trim(); if(!text) return;
+  inputEl.value=""; inputEl.focus(); sendBtn.disabled=true;
+  addBubble("user", text); const thinking = addBubble("assistant","…thinking…");
+  try{
+    let reply;
+    if (engine) {
+      reply = await runLocal(system.concat({role:"user",content:text}));
+    } else if (webllmLoaded()) {
+      // User forgot to click "Load Model"
+      note("Load a model first.");
+      thinking.innerHTML = mdLite("**Hint:** Click **Load Model** first.");
+      sendBtn.disabled=false; return;
+    } else if (WORKER_URL) {
+      // optional fallback
+      reply = await runProxy(text);
+    } else {
+      throw new Error("No local model loaded. Add /lib/web-llm.umd.min.js and click Load Model.");
+    }
+    lastReply = reply; thinking.innerHTML = mdLite(reply); speak(reply); note("Done.");
+  }catch(e){
+    thinking.innerHTML = mdLite("**Error:** "+escapeHtml(e.message));
+    note("Generation error.");
+  }finally{ sendBtn.disabled=false; }
 });
 
-document.querySelectorAll(".chip").forEach(ch=> ch.addEventListener("click", ()=>{ input.value = ch.dataset.text; input.focus(); }));
-
+/* UX bits */
+inputEl.addEventListener("keydown", e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendBtn.click(); }});
+document.querySelectorAll(".chip").forEach(ch=> ch.addEventListener("click", ()=>{ inputEl.value = ch.dataset.text; inputEl.focus(); }));
 </script>
 </body>
 </html>
