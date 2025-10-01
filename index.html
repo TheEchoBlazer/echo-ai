@@ -133,7 +133,7 @@
         <div class="logo"></div>
         <div>
           <h1>Echo-AI — Local Mode</h1>
-          <div class="sub">Run locally (no key required).</div>
+          <div class="sub">Run locally with WebLLM.</div>
         </div>
       </div>
       <div id="status" class="status" role="status">Ready</div>
@@ -141,12 +141,12 @@
 
     <div class="engine">
       <select id="model" aria-label="Select AI model">
-        <option value="Phi-3.5-mini">Phi-3.5-mini (smallest)</option>
-        <option value="Qwen2.5-Coder-1.5B">Qwen2.5-Coder-1.5B (code-oriented)</option>
-        <option value="Llama-3.1-3B">Llama-3.1-3B</option>
+        <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5-mini (smallest)</option>
+        <option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC">Qwen2.5-Coder-1.5B (code-oriented)</option>
+        <option value="Llama-3.1-3B-Instruct-q4f16_1-MLC">Llama-3.1-3B</option>
       </select>
       <button id="loadLocal" class="action" type="button">Load Model</button>
-      <span class="tiny">AI runs locally with WebLLM.</span>
+      <span class="tiny">Requires WebLLM for AI functionality.</span>
     </div>
 
     <div class="stage" id="stage" role="region" aria-label="Animation stage">
@@ -182,50 +182,61 @@
   <!-- Uncomment the line below if you have web-llm.umd.min.js -->
   <!-- <script src="./lib/web-llm.umd.min.js"></script> -->
   <script>
-    // Mock AI response function
+    // Mock AI response for testing
     function getMockAIResponse(message) {
-      return `Echo-AI: You said "${message}". I'm a mock AI, replace me with WebLLM!`;
+      return `Echo-AI: You said "${message}". Please set up WebLLM for real AI responses.`;
     }
 
-    // Initialize WebLLM (uncomment and configure if you have the library)
-    /*
+    // WebLLM integration (uncomment and configure if you have the library)
     let llm = null;
     async function initWebLLM(model) {
+      if (!window.WebLLM) {
+        console.error('WebLLM not found. Ensure web-llm.umd.min.js is loaded.');
+        return false;
+      }
       try {
-        llm = new WebLLM.LLM({ modelId: model });
+        // Note: WebLLM API may vary; check documentation for exact syntax
+        llm = new WebLLM.LLM({ model: model });
         await llm.load();
+        console.log(`Model ${model} loaded successfully.`);
         return true;
       } catch (e) {
-        console.error('WebLLM failed:', e);
+        console.error('WebLLM initialization failed:', e);
         return false;
       }
     }
     async function getWebLLMResponse(message) {
-      if (!llm) return 'Error: AI model not loaded.';
+      if (!llm) return 'Error: AI model not loaded. Click "Load Model" first.';
       try {
-        const response = await llm.generate(message);
+        const response = await llm.generate({ prompt: message });
         return `Echo-AI: ${response}`;
       } catch (e) {
         console.error('WebLLM response failed:', e);
-        return 'Error: Failed to generate response.';
+        return 'Error: Failed to generate AI response.';
       }
     }
-    */
 
     // Load model button
     document.getElementById('loadLocal').addEventListener('click', () => {
       const status = document.getElementById('status');
       const model = document.getElementById('model').value;
       status.textContent = 'Loading model...';
-      setTimeout(() => {
-        status.textContent = `Model ${model} loaded (simulated).`;
-        // Uncomment for WebLLM
-        /*
+      // Check for WebGPU support
+      if (!navigator.gpu) {
+        status.textContent = 'Error: WebGPU not supported in this browser.';
+        console.error('WebGPU not supported. Use Chrome 113+ or Edge 113+.');
+        return;
+      }
+      // Use WebLLM if available, else mock
+      if (window.WebLLM) {
         initWebLLM(model).then(success => {
-          status.textContent = success ? `Model ${model} loaded.` : 'Failed to load model.';
+          status.textContent = success ? `Model ${model} loaded.` : 'Failed to load model. Check console.';
         });
-        */
-      }, 1000);
+      } else {
+        setTimeout(() => {
+          status.textContent = 'WebLLM not found. Using mock AI.';
+        }, 1000);
+      }
     });
 
     // Send message button
@@ -246,24 +257,24 @@
         setTimeout(() => {
           const aiRow = document.createElement('div');
           aiRow.className = 'row';
-          // Use mock response (uncomment WebLLM code for real AI)
-          const response = getMockAIResponse(message);
-          /*
-          getWebLLMResponse(message).then(response => {
+          if (window.WebLLM && llm) {
+            getWebLLMResponse(message).then(response => {
+              aiRow.innerHTML = `<div class="msg theirs">${response}</div>`;
+              chat.appendChild(aiRow);
+              chat.scrollTop = chat.scrollHeight;
+              const mouth = document.querySelector('.mouth');
+              mouth.classList.add('talk');
+              setTimeout(() => mouth.classList.remove('talk'), 300);
+            });
+          } else {
+            const response = getMockAIResponse(message);
             aiRow.innerHTML = `<div class="msg theirs">${response}</div>`;
             chat.appendChild(aiRow);
             chat.scrollTop = chat.scrollHeight;
             const mouth = document.querySelector('.mouth');
             mouth.classList.add('talk');
             setTimeout(() => mouth.classList.remove('talk'), 300);
-          });
-          */
-          aiRow.innerHTML = `<div class="msg theirs">${response}</div>`;
-          chat.appendChild(aiRow);
-          chat.scrollTop = chat.scrollHeight;
-          const mouth = document.querySelector('.mouth');
-          mouth.classList.add('talk');
-          setTimeout(() => mouth.classList.remove('talk'), 300);
+          }
         }, 500);
       }
     });
