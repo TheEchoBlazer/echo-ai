@@ -122,7 +122,7 @@
       border-radius: 999px; color: #a8b3c6; cursor: pointer;
     }
     .tiny {
-      font-size: 12px; color: #9aa6bb;
+      font-size: 12px; color: #a9b5c6;
     }
   </style>
 </head>
@@ -133,21 +133,20 @@
         <div class="logo"></div>
         <div>
           <h1>Echo-AI — Local Mode</h1>
-          <div class="sub">Run locally with WebLLM (updated Oct 2025).</div>
+          <div class="sub">Run locally with WebLLM (Oct 2025).</div>
         </div>
       </div>
-      <div id="status" class="status" role="status">Ready</div>
+      <div id="status" class="status" role="status">Checking WebGPU...</div>
     </header>
 
     <div class="engine">
       <select id="model" aria-label="Select AI model">
-        <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Llama-3.2-1B (small, fast)</option>
-        <option value="Phi-3-mini-4k-instruct-q4f16_1-MLC">Phi-3-mini (code-oriented)</option>
-        <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC">Qwen2.5-1.5B (balanced)</option>
-        <option value="Mistral-7B-Instruct-v0.3-q4f16_1-MLC">Mistral-7B (advanced)</option>
+        <option value="Phi-3-mini-4k-instruct-q4f16_1-MLC">Phi-3-mini (fastest, ~1GB)</option>
+        <option value="Llama-3.2-1B-Instruct-q4f16_1-MLC">Llama-3.2-1B (balanced)</option>
+        <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC">Qwen2.5-1.5B (code-focused)</option>
       </select>
       <button id="loadLocal" class="action" type="button">Load Model</button>
-      <span class="tiny">v0.2.79 | Requires WebGPU (Chrome/Edge 113+).</span>
+      <span class="tiny">WebLLM v0.2.79 | <a href="https://webgpureport.org" target="_blank">Check WebGPU</a></span>
     </div>
 
     <div class="stage" id="stage" role="region" aria-label="Animation stage">
@@ -180,12 +179,11 @@
     </div>
   </div>
 
-  <!-- WebLLM v0.2.79 CDN -->
   <script src="https://unpkg.com/@mlc-ai/web-llm@0.2.79/dist/web-llm.umd.min.js"></script>
   <script>
     // Mock fallback
     function getMockAIResponse(message) {
-      return `Echo-AI: You said "${message}". WebLLM not loaded—check console for errors.`;
+      return `Echo-AI: You said "${message}". WebLLM failed—check console for errors (F12).`;
     }
 
     // WebLLM globals
@@ -194,51 +192,65 @@
     // Initialize engine
     async function initWebLLM(modelId) {
       if (!window.webllm) {
-        console.error('WebLLM not loaded from CDN.');
+        console.error('WebLLM not loaded. CDN failed or blocked.');
         return false;
       }
       try {
-        console.log(`Loading model: ${modelId}...`);
+        console.log(`Attempting to load ${modelId}...`);
         engine = await window.webllm.CreateMLCEngine(modelId, {
           initProgressCallback: (report) => {
-            console.log(`Progress: ${report.text} (${report.progress}% done)`);
+            console.log(`Progress: ${report.text} (${Math.round(report.progress * 100)}%)`);
             document.getElementById('status').textContent = `Loading: ${report.text}`;
           }
         });
-        console.log(`Model ${modelId} loaded successfully.`);
+        console.log(`Model ${modelId} loaded.`);
         return true;
       } catch (e) {
-        console.error('WebLLM init failed:', e.message);
+        console.error('WebLLM init failed:', e.message, e.stack);
         return false;
       }
     }
 
-    // Get response (streaming support)
+    // Get response
     async function getWebLLMResponse(message) {
-      if (!engine) return 'Error: Load a model first.';
+      if (!engine) return 'Error: Load a model first (click Load Model).';
       try {
         const response = await engine.chat.completions.create({
           model: engine.modelId,
-          messages: [{ role: 'user', content: message }],
-          stream: false, // Set to true for real-time streaming
+          messages: [
+            { role: 'system', content: 'You are a coding assistant specializing in Minecraft Skript for 1.21+. Generate clean, functional Skript code with clear comments. Avoid errors and ensure compatibility with Skript 2.7+. For non-coding queries, provide concise, helpful answers.' },
+            { role: 'user', content: message }
+          ],
+          stream: false,
           max_tokens: 512,
           temperature: 0.7
         });
         return `Echo-AI: ${response.choices[0].message.content}`;
       } catch (e) {
-        console.error('WebLLM response failed:', e.message);
-        return 'Error: Response generation failed.';
+        console.error('WebLLM response failed:', e.message, e.stack);
+        return 'Error: Failed to generate response. Check console.';
       }
     }
 
-    // WebGPU check on load
-    document.addEventListener('DOMContentLoaded', () => {
+    // WebGPU check
+    document.addEventListener('DOMContentLoaded', async () => {
       const status = document.getElementById('status');
       if (!navigator.gpu) {
-        status.textContent = 'Error: WebGPU unsupported. Use Chrome/Edge 113+. Test at webgpureport.org.';
-        console.error('WebGPU unavailable.');
-      } else {
-        status.textContent = 'Ready. Select & load a model.';
+        status.textContent = 'Error: WebGPU not supported. Use Chrome/Edge 113+. Visit webgpureport.org.';
+        console.error('WebGPU unavailable. Check chrome://gpu.');
+        return;
+      }
+      try {
+        const adapter = await navigator.gpu.requestAdapter();
+        if (!adapter) {
+          status.textContent = 'Error: No WebGPU adapter found. Update GPU drivers.';
+          console.error('No WebGPU adapter.');
+        } else {
+          status.textContent = 'WebGPU ready. Select & load a model.';
+        }
+      } catch (e) {
+        status.textContent = 'Error: WebGPU init failed. Check console.';
+        console.error('WebGPU check failed:', e.message);
       }
     });
 
@@ -246,9 +258,9 @@
     document.getElementById('loadLocal').addEventListener('click', async () => {
       const status = document.getElementById('status');
       const model = document.getElementById('model').value;
-      status.textContent = 'Initializing WebGPU...';
-      await initWebLLM(model);
-      status.textContent = engine ? `Model ${model} loaded.` : 'Load failed—check console.';
+      status.textContent = `Initializing ${model}...`;
+      const success = await initWebLLM(model);
+      status.textContent = success ? `Model ${model} loaded.` : 'Load failed—check console (F12).';
     });
 
     // Send button
@@ -257,7 +269,6 @@
       const chat = document.getElementById('chat');
       const message = input.value.trim();
       if (message) {
-        // User message
         const row = document.createElement('div');
         row.className = 'row me';
         row.innerHTML = `<div class="msg mine">${message}</div>`;
@@ -265,9 +276,9 @@
         input.value = '';
         chat.scrollTop = chat.scrollHeight;
 
-        // AI response
         const aiRow = document.createElement('div');
         aiRow.className = 'row';
+        aiRow.innerHTML = `<div class="msg theirs">Echo-AI: Generating...</div>`;
         chat.appendChild(aiRow);
         chat.scrollTop = chat.scrollHeight;
 
@@ -275,7 +286,6 @@
         aiRow.innerHTML = `<div class="msg theirs">${response}</div>`;
         chat.scrollTop = chat.scrollHeight;
 
-        // Mouth animation
         const mouth = document.querySelector('.mouth');
         mouth.classList.add('talk');
         setTimeout(() => mouth.classList.remove('talk'), 300);
@@ -295,6 +305,7 @@
 
         const aiRow = document.createElement('div');
         aiRow.className = 'row';
+        aiRow.innerHTML = `<div class="msg theirs">Echo-AI: Generating...</div>`;
         chat.appendChild(aiRow);
         chat.scrollTop = chat.scrollHeight;
 
