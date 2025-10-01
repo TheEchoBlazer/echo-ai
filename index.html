@@ -1,72 +1,184 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Echo-AI — Local Mode</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%236ee7ff'/></svg>">
   <style>
-    :root{--bg:#0b0f14;--ink:#e8eef9;--muted:#9aa6bb;--line:#20304a;--hi:#6ee7ff;--hi2:#8b5cf6;
-          --skin:#f1c38a;--hair:#322214;--shirt:#2b3560;--strap:#303a58;--mouth:#3b0d0d;--tongue:#b45555;--teeth:#fff}
-    *{box-sizing:border-box} body{margin:0;background:#0b0f14;color:var(--ink);font:14px/1.45 system-ui,Segoe UI,Roboto,Arial}
-    .wrap{max-width:960px;margin:0 auto;padding:16px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .brand{display:flex;align-items:center;gap:10px}
-    .logo{width:28px;height:28px;border-radius:8px;background:conic-gradient(from 0deg,var(--hi),var(--hi2),var(--hi));box-shadow:0 0 22px #6ee7ff55 inset,0 0 30px #8b5cf644}
-    h1{margin:0;font-size:18px}.sub{font-size:12px;color:var(--muted)}
-    .status{font-size:12px;color:#a9b5c9;margin-top:6px}
-
-    .stage{position:relative;height:420px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(#0e1523 0 48%,#0b0f14 48% 100%);overflow:hidden;margin-top:12px}
-    .ground{position:absolute;inset:auto 0 0 0;height:80px;background:radial-gradient(800px 120px at 50% 0%,#101829 0,#0c101b 60%,#0b0f14 100%);border-top:1px solid #1e2a47}
-    .shadow{position:absolute;left:50%;bottom:70px;transform:translateX(-50%);width:180px;height:22px;background:radial-gradient(closest-side,#0006,#0000);filter:blur(4px);opacity:.0}
-    .rig{position:absolute;left:50%;top:-380px;transform:translateX(-50%);width:220px;height:380px;pointer-events:none;
-         animation:drop 2.0s cubic-bezier(.2,.8,.1,1) forwards,sway 2.0s ease-in-out}
-    @keyframes sway{0%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 24px)) rotate(-3.5deg)}50%{transform:translateX(-50%)}75%{transform:translateX(calc(-50% + 24px)) rotate(3.5deg)}100%{transform:translateX(-50%)}}
-    @keyframes drop{0%{top:-380px}70%{top:250px}82%{top:236px}100%{top:242px}}
-    .land{animation:thump .25s ease-out}@keyframes thump{0%{transform:translateX(-50%) scale(1)}50%{transform:translateX(calc(-50% - 2px)) scale(1.04,.96)}100%{transform:translateX(-50%) scale(1)}}
-    .shake{animation:shake .18s linear 2}@keyframes shake{0%{transform:translateX(0)}25%{transform:translateX(2px)}50%{transform:translateX(-2px)}75%{transform:translateX(1px)}100%{transform:translateX(0)}}
-    .mouth{transform-origin:50% 0%;transition:transform .06s linear}.talk{transform:scaleY(1.35)}
-
-    .card{background:#0f1625;border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:12px}
-    .chat{height:240px;overflow:auto;padding:12px}
-    .row{display:flex;gap:10px;margin:8px 0}.me{justify-content:flex-end}
-    .msg{max-width:80%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;white-space:pre-wrap;word-wrap:anywhere}
-    .mine{background:#1b2742}.theirs{background:#141b2c}
-    .code{display:block;background:#0b1120;border:1px solid #1a2742;border-radius:10px;padding:8px;overflow:auto;margin:8px 0}
-    .toolbar{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:#0d1424}
-    textarea,button,select{border-radius:12px;border:1px solid var(--line);background:#0e1626;color:var(--ink)}
-    textarea{flex:1;min-height:64px;padding:10px}
-    button{padding:9px 12px;font-weight:800;cursor:pointer}
-    .action{background:linear-gradient(90deg,var(--hi2),var(--hi));color:#061019;border:none}
-    .engine{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    .chip{padding:6px 10px;border:1px solid var(--line);background:#0e1420;border-radius:999px;color:#a8b3c6;cursor:pointer}
-    .tiny{font-size:12px;color:#9aa6bb}
-  </style>
-</head>
-<body>
-<div class="wrap">
-  <header>
-    <div class="brand">
-      <div class="logo"></div>
-      <div>
-        <h1>Echo-AI — Local Mode</h1>
-        <div class="sub">Run locally with WebLLM (no key required).</div>
-      </div>
-    </div>
-    <div id="status" class="status">Booting…</div>
-  </header>
-
-  <div class="engine">
-    <select id="model">
-      <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5-mini (smallest)</option>
-      <option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC">Qwen2.5-Coder-1.5B (code-oriented)</option>
-      <option value="Llama-3.1-3B-Instruct-q4f16_1-MLC">Llama-3.1-3B-Instruct</option>
-    </select>
-    <button id="loadLocal" class="action">Load Local Model</button>
-    <span class="tiny">Uses <code>./lib/web-llm.umd.min.js</code>.</span>
-  </div>
-
-  <div class="stage" id="stage">
-    <div class="shadow" id="shadow"></div>
-    <div class="rig" id="rig" aria-label="Ralfy with parachute">
-      <svg viewBox="0 0 260 300" width="220
+    :root {
+      --bg: #0b0f14;
+      --ink: #e8eef9;
+      --muted: #9aa6bb;
+      --line: #20304a;
+      --hi: #6ee7ff;
+      --hi2: #8b5cf6;
+      --skin: #f1c38a;
+      --hair: #322214;
+      --shirt: #2b3560;
+      --strap: #303a58;
+      --mouth: #3b0d0d;
+      --tongue: #b45555;
+      --teeth: #fff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: conic-gradient(from 0deg, var(--hi), var(--hi2), var(--hi));
+      box-shadow: 0 0 22px #6ee7ff55 inset, 0 0 30px #8b5cf644;
+    }
+    h1 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .status {
+      font-size: 12px;
+      color: #a9b5c9;
+      margin-top: 6px;
+    }
+    .stage {
+      position: relative;
+      height: 420px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: linear-gradient(#0e1523 0 48%, #0b0f14 48% 100%);
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .ground {
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 80px;
+      background: radial-gradient(800px 120px at 50% 0%, #101829 0, #0c101b 60%, #0b0f14 100%);
+      border-top: 1px solid #1e2a47;
+    }
+    .shadow {
+      position: absolute;
+      left: 50%;
+      bottom: 70px;
+      transform: translateX(-50%);
+      width: 180px;
+      height: 22px;
+      background: radial-gradient(closest-side, #0006, #0000);
+      filter: blur(4px);
+      opacity: 0.2;
+    }
+    .rig {
+      position: absolute;
+      left: 50%;
+      top: -380px;
+      transform: translateX(-50%);
+      width: 220px;
+      height: 380px;
+      pointer-events: none;
+      will-change: transform;
+      animation: drop 2.0s cubic-bezier(.2, .8, .1, 1) forwards, sway 2.0s ease-in-out infinite;
+    }
+    @keyframes sway {
+      0% { transform: translateX(-50%); }
+      25% { transform: translateX(calc(-50% - 24px)) rotate(-3.5deg); }
+      50% { transform: translateX(-50%); }
+      75% { transform: translateX(calc(-50% + 24px)) rotate(3.5deg); }
+      100% { transform: translateX(-50%); }
+    }
+    @keyframes drop {
+      0% { top: -380px; }
+      70% { top: 250px; }
+      82% { top: 236px; }
+      100% { top: 242px; }
+    }
+    .land {
+      animation: thump .25s ease-out;
+    }
+    @keyframes thump {
+      0% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(calc(-50% - 2px)) scale(1.04, .96); }
+      100% { transform: translateX(-50%) scale(1); }
+    }
+    .shake {
+      animation: shake .18s linear 2;
+    }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(2px); }
+      50% { transform: translateX(-2px); }
+      75% { transform: translateX(1px); }
+      100% { transform: translateX(0); }
+    }
+    .mouth {
+      transform-origin: 50% 0;
+      transition: transform .06s linear;
+    }
+    .talk {
+      transform: scaleY(1.35);
+    }
+    .card {
+      background: #0f1625;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .chat {
+      height: 240px;
+      overflow: auto;
+      padding: 12px;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      margin: 8px 0;
+    }
+    .me {
+      justify-content: flex-end;
+    }
+    .msg {
+      max-width: 80%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .mine {
+      background: #1b2742;
+    }
+    .theirs {
+      background: #141b2c;
+    }
+    .code {
+      display: block;
+      background: #0b1120;
+      border: 1px solid #1a2742;
+      border-radius: 10px;
+      padding: 8px;
+      overflow: auto;
+      margin: 8px 0;
