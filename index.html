@@ -3,25 +3,29 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Echo-AI — Ralfy (Local WebLLM, no CDN)</title>
+<title>Echo-AI — Dual Mode (Local or Proxy)</title>
 <style>
-  :root{--bg:#0b0f14;--ink:#e8eef9;--muted:#9aa6bb;--line:#213047;--hi:#6ee7ff;--hi2:#8b5cf6;
+  :root{--bg:#0b0f14;--ink:#e8eef9;--muted:#9aa6bb;--line:#20304a;--hi:#6ee7ff;--hi2:#8b5cf6;
         --skin:#f1c38a;--hair:#322214;--shirt:#2b3560;--strap:#303a58;--mouth:#3b0d0d;--tongue:#b45555;--teeth:#fff}
-  *{box-sizing:border-box} body{margin:0;background:radial-gradient(1200px 700px at 10% -10%,#15233b 0%,#0b0f14 45% 100%);color:var(--ink);font:14px/1.45 system-ui,Segoe UI,Roboto,Arial}
+  *{box-sizing:border-box} body{margin:0;background:#0b0f14;color:var(--ink);font:14px/1.45 system-ui,Segoe UI,Roboto,Arial}
   .wrap{max-width:960px;margin:0 auto;padding:16px}
   header{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .brand{display:flex;align-items:center;gap:10px}
   .logo{width:28px;height:28px;border-radius:8px;background:conic-gradient(from 0deg,var(--hi),var(--hi2),var(--hi));box-shadow:0 0 22px #6ee7ff55 inset,0 0 30px #8b5cf644}
-  h1{font-size:18px;margin:0}.sub{font-size:12px;color:var(--muted)}
-  .stage{position:relative;height:520px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(#0e1523 0 40%,#0b0f14 40% 100%);overflow:hidden;margin-top:12px}
-  .ground{position:absolute;inset:auto 0 0 0;height:90px;background:radial-gradient(800px 120px at 50% 0%,#101829 0%,#0c101b 60%,#0b0f14 100%);border-top:1px solid #1e2a47}
-  .shadow{position:absolute;left:50%;bottom:78px;transform:translateX(-50%);width:180px;height:22px;background:radial-gradient(closest-side,#00000055,#0000);filter:blur(4px);opacity:0}
-  .rig{position:absolute;left:50%;top:-420px;transform:translateX(-50%);width:240px;height:420px;pointer-events:none;animation:drop-in 2.1s cubic-bezier(.2,.8,.1,1) forwards,sway 2.1s ease-in-out}
-  @keyframes sway{0%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 26px)) rotate(-3.5deg)}50%{transform:translateX(-50%)}75%{transform:translateX(calc(-50% + 26px)) rotate(3.5deg)}100%{transform:translateX(-50%)}}
-  @keyframes drop-in{0%{top:-420px}70%{top:290px}82%{top:275px}100%{top:282px}}
+  h1{margin:0;font-size:18px}.sub{font-size:12px;color:var(--muted)}
+  .status{font-size:12px;color:#a9b5c9;margin-top:6px}
+
+  .stage{position:relative;height:420px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(#0e1523 0 48%,#0b0f14 48% 100%);overflow:hidden;margin-top:12px}
+  .ground{position:absolute;inset:auto 0 0 0;height:80px;background:radial-gradient(800px 120px at 50% 0%,#101829 0,#0c101b 60%,#0b0f14 100%);border-top:1px solid #1e2a47}
+  .shadow{position:absolute;left:50%;bottom:70px;transform:translateX(-50%);width:180px;height:22px;background:radial-gradient(closest-side,#0006,#0000);filter:blur(4px);opacity:.0}
+  .rig{position:absolute;left:50%;top:-380px;transform:translateX(-50%);width:220px;height:380px;pointer-events:none;
+       animation:drop 2.0s cubic-bezier(.2,.8,.1,1) forwards,sway 2.0s ease-in-out}
+  @keyframes sway{0%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 24px)) rotate(-3.5deg)}50%{transform:translateX(-50%)}75%{transform:translateX(calc(-50% + 24px)) rotate(3.5deg)}100%{transform:translateX(-50%)}}
+  @keyframes drop{0%{top:-380px}70%{top:250px}82%{top:236px}100%{top:242px}}
   .land{animation:thump .25s ease-out}@keyframes thump{0%{transform:translateX(-50%) scale(1)}50%{transform:translateX(calc(-50% - 2px)) scale(1.04,.96)}100%{transform:translateX(-50%) scale(1)}}
   .shake{animation:shake .18s linear 2}@keyframes shake{0%{transform:translateX(0)}25%{transform:translateX(2px)}50%{transform:translateX(-2px)}75%{transform:translateX(1px)}100%{transform:translateX(0)}}
   .mouth{transform-origin:50% 0%;transition:transform .06s linear}.talk{transform:scaleY(1.35)}
+
   .card{background:#0f1625;border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:12px}
   .chat{height:240px;overflow:auto;padding:12px}
   .row{display:flex;gap:10px;margin:8px 0}.me{justify-content:flex-end}
@@ -29,12 +33,14 @@
   .mine{background:#1b2742}.theirs{background:#141b2c}
   .code{display:block;background:#0b1120;border:1px solid #1a2742;border-radius:10px;padding:8px;overflow:auto;margin:8px 0}
   .toolbar{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:#0d1424}
-  textarea{flex:1;min-height:64px;background:#0e1626;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px}
-  button,select{border-radius:10px;border:1px solid var(--line);background:#0e1626;color:var(--ink);padding:9px 12px;cursor:pointer}
-  .action{background:linear-gradient(90deg,var(--hi2),var(--hi));color:#061019;border:none;font-weight:800}
+  textarea,button,select{border-radius:12px;border:1px solid var(--line);background:#0e1626;color:var(--ink)}
+  textarea{flex:1;min-height:64px;padding:10px}
+  button{padding:9px 12px;font-weight:800;cursor:pointer}
+  .action{background:linear-gradient(90deg,var(--hi2),var(--hi));color:#061019;border:none}
+  .engine{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
   .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
   .chip{padding:6px 10px;border:1px solid var(--line);background:#0e1420;border-radius:999px;color:#a8b3c6;cursor:pointer}
-  .status{font-size:12px;color:#a9b5c9;margin-top:6px}
+  .tiny{font-size:12px;color:#9aa6bb}
 </style>
 </head>
 <body>
@@ -43,46 +49,35 @@
     <div class="brand">
       <div class="logo"></div>
       <div>
-        <h1>Echo-AI — Ralfy (Local)</h1>
-        <div class="sub">No CDN. Load a local model → Send. Optional proxy fallback only if you set one.</div>
+        <h1>Echo-AI — Dual Mode</h1>
+        <div class="sub">Run locally (WebLLM, no key) or via your proxy. Same UI, your choice.</div>
       </div>
     </div>
-    <div class="bar">
-      <select id="model">
-        <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5-mini (smallest)</option>
-        <option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC">Qwen2.5-Coder-1.5B (code)</option>
-        <option value="Llama-3.1-3B-Instruct-q4f16_1-MLC">Llama-3.1-3B</option>
-      </select>
-      <button id="load" class="action">Load Model</button>
-    </div>
+    <div id="status" class="status">Booting…</div>
   </header>
+
+  <div class="engine">
+    <select id="model">
+      <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5-mini (smallest)</option>
+      <option value="Qwen2.5-Coder-1.5B-Instruct-q4f16_1-MLC">Qwen2.5-Coder-1.5B (code-oriented)</option>
+      <option value="Llama-3.1-3B-Instruct-q4f16_1-MLC">Llama-3.1-3B-Instruct</option>
+    </select>
+    <button id="loadLocal" class="action">Load Local Model</button>
+    <button id="askProxy">Ask via Proxy</button>
+    <span class="tiny">Local uses <code>./lib/web-llm.umd.min.js</code>. Proxy uses your <code>WORKER_URL</code>.</span>
+  </div>
 
   <div class="stage" id="stage">
     <div class="shadow" id="shadow"></div>
-    <div class="rig" id="rig" aria-label="Ralfy">
-      <svg viewBox="0 0 280 220" width="240" style="display:block;margin:0 auto">
-        <path d="M20,110 C50,10 230,10 260,110 Q140,160 20,110 Z" fill="#6bb0ff" stroke="#2b3d62" stroke-width="3"/>
-        <path d="M80,40 Q140,70 200,40" stroke="#35527e" stroke-width="2" fill="none" opacity=".7"/>
-        <path d="M50,70 Q140,90 230,70" stroke="#35527e" stroke-width="2" fill="none" opacity:.7/>
-        <g fill="none" stroke="#bcd4ff" stroke-width="2">
-          <path d="M60,110 L90,200"/><path d="M110,120 L120,200"/><path d="M170,120 L160,200"/><path d="M220,110 L190,200"/>
-        </g>
-      </svg>
-      <svg id="ralfy" viewBox="0 0 260 300" width="240" style="display:block;margin:-10px auto 0">
-        <rect x="110" y="130" width="12" height="80" rx="6" fill="var(--strap)"/><rect x="138" y="130" width="12" height="80" rx="6" fill="var(--strap)"/>
+    <div class="rig" id="rig" aria-label="Ralfy with parachute">
+      <!-- (Minimal Ralfy) -->
+      <svg viewBox="0 0 260 300" width="220" style="display:block;margin:50px auto 0">
         <ellipse cx="130" cy="120" rx="82" ry="88" fill="var(--skin)" stroke="#00000022" stroke-width="2"/>
         <ellipse cx="130" cy="76" rx="86" ry="58" fill="var(--hair)"/>
-        <ellipse cx="48" cy="122" rx="16" ry="20" fill="var(--skin)"/><ellipse cx="212" cy="122" rx="16" ry="20" fill="var(--skin)"/>
         <ellipse cx="100" cy="114" rx="16" ry="14" fill="#fff"/><ellipse cx="160" cy="114" rx="16" ry="14" fill="#fff"/>
         <circle cx="104" cy="116" r="4" fill="#1c2440"/><circle cx="164" cy="116" r="4" fill="#1c2440"/>
         <path d="M128,128 q4,10 0,16" stroke="#8f6b3c" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <g id="mouthGroup">
-          <path id="mouth" class="mouth" d="M98,152 q32,22 64,0 q-8,18 -32,18 q-24,0 -32,-18 Z" fill="var(--mouth)"/>
-          <rect x="110" y="160" width="40" height="6" rx="3" fill="var(--teeth)"/>
-          <ellipse cx="130" cy="170" rx="18" ry="8" fill="var(--tongue)" opacity=".8"/>
-        </g>
-        <rect x="80" y="190" width="100" height="86" rx="18" fill="var(--shirt)"/>
-        <rect x="90" y="274" width="26" height="18" rx="6" fill="#1e2748"/><rect x="144" y="274" width="26" height="18" rx="6" fill="#1e2748"/>
+        <path id="mouth" class="mouth" d="M98,152 q32,22 64,0 q-8,18 -32,18 q-24,0 -32,-18 Z" fill="var(--mouth)"/>
       </svg>
     </div>
     <div class="ground"></div>
@@ -91,132 +86,147 @@
   <div class="card">
     <div id="chat" class="chat"></div>
     <div class="toolbar">
-      <textarea id="in" placeholder="e.g., Skript: /dupe up to 4; block &cHeart; 5s cooldown; perm echo.dupe."></textarea>
+      <textarea id="in" placeholder="Skript or GTag/Unity prompt…"></textarea>
       <button id="send" class="action">Send</button>
     </div>
   </div>
 
   <div class="chips">
-    <div class="chip" data-text="Skript: command /dupe that duplicates held item up to 4; deny if item's name contains &cHeart or if custom model data is 123. Include cooldown 5s and permission echo.dupe.">/dupe up to 4 + block hearts</div>
-    <div class="chip" data-text="Skript: 'Quacke Mace' with right-click wind burst (level 5), shift-right-click ground slam; base damage ~9 hearts; only one exists server-wide; crafting recipe; admin bypass perm quacke.admin.">Quacke Mace</div>
-    <div class="chip" data-text="Unity (GTag): C# MonoBehaviour that toggles Ghost Monkey + Snowball Spam via wrist UI; Photon PUN 2 safe RPCs.">GTag wrist toggle</div>
+    <div class="chip" data-text="Skript: command /dupe that duplicates held item up to 4; deny if item's name contains &cHeart; 5s cooldown; permission echo.dupe.">/dupe example</div>
+    <div class="chip" data-text="Unity (GTag): C# wrist toggle Ghost Monkey + Snowball Spam via Photon PUN 2 safe RPCs.">GTag wrist toggle</div>
   </div>
-
-  <div class="status" id="status">Ready. Click “Load Model”. Open your GitHub Pages URL directly (not embedded).</div>
 </div>
 
-<!-- LOCAL-ONLY: ship web-llm.umd.min.js in your repo at /lib/ -->
-<script src="./lib/web-llm.umd.min.js"></script>
-
 <script>
-/* ========== OPTIONAL PROXY FALLBACK (leave blank to ignore) ========== */
-const WORKER_URL = ""; // e.g. "https://echo-ai-proxy.yourname.workers.dev" (optional)
+/*** CONFIG — set this only if you want proxy mode ***/
+const WORKER_URL = ""; // e.g. "https://echo-ai-proxy.yourname.workers.dev"
 
-/* ========== DOM + UI ========== */
+/*** Shortcuts ***/
 const $=s=>document.querySelector(s);
-const chatEl=$("#chat"), inputEl=$("#in"), sendBtn=$("#send");
-const modelEl=$("#model"), loadBtn=$("#load"), statusEl=$("#status");
-const rig=$("#rig"), shadow=$("#shadow"), mouth=$("#mouth");
-function note(m){ statusEl.textContent=m; console.log("[Echo-AI]",m); }
-function escapeHtml(s){return String(s).replace(/[<>&]/g,c=>({ '<':'&lt;','>':'&gt;','&':'&amp;' }[c]));}
-function mdLite(t){ const parts=String(t).split(/```/); let out=""; for(let i=0;i<parts.length;i++){ if(i%2===0) out+=escapeHtml(parts[i]).replace(/\n/g,"<br>"); else{ const nl=parts[i].indexOf("\n"); let lang="txt",code=parts[i]; if(nl!==-1){ lang=parts[i].slice(0,nl).trim()||"txt"; code=parts[i].slice(nl+1);} out+=`<pre class="code"><code data-lang="${lang}">${escapeHtml(code)}</code></pre>`; } } return out;}
+const statusEl=$("#status"), chatEl=$("#chat"), inputEl=$("#in"), sendBtn=$("#send");
+const mouth=$("#mouth"), modelEl=$("#model"), loadLocalBtn=$("#loadLocal"), askProxyBtn=$("#askProxy");
+function note(m){ statusEl.textContent=m; console.log("[Echo-AI]", m); }
+function escapeHtml(s){return String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));}
+function mdLite(t){ const p=String(t).split(/```/); let out=""; for(let i=0;i<p.length;i++){ if(i%2===0) out+=escapeHtml(p[i]).replace(/\n/g,"<br>"); else{ const nl=p[i].indexOf("\n"); let lang="txt",code=p[i]; if(nl!==-1){ lang=p[i].slice(0,nl).trim()||"txt"; code=p[i].slice(nl+1);} out+=`<pre class="code"><code data-lang="${lang}">${escapeHtml(code)}</code></pre>`; } } return out; }
 function addBubble(role,text){ const row=document.createElement("div"); row.className="row"+(role==="user"?" me":""); const msg=document.createElement("div"); msg.className="msg "+(role==="user"?"mine":"theirs"); msg.innerHTML=mdLite(text); row.appendChild(msg); chatEl.appendChild(row); chatEl.scrollTop=chatEl.scrollHeight; return msg; }
+document.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{ inputEl.value=c.dataset.text; inputEl.focus(); }));
 
-/* ========== Landing FX + TTS ========== */
+/*** Entrance FX ***/
+const rig=$("#rig"), shadow=$("#shadow");
 let landed=false;
-rig.addEventListener("animationend",(e)=>{ if(e.animationName==="drop-in" && !landed){ landed=true; rig.classList.add("land"); $("#stage").classList.add("shake"); shadow.style.opacity=.85; setTimeout(()=>$("#stage").classList.remove("shake"),260); }});
+rig.addEventListener("animationend", e=>{ if(e.animationName==="drop" && !landed){ landed=true; rig.classList.add("land"); $("#stage").classList.add("shake"); shadow.style.opacity=.85; setTimeout(()=>$("#stage").classList.remove("shake"),260); }});
+
+/*** TTS + Lipsync ***/
 let voices=[],talking=null,lastReply="";
 function loadVoices(){ voices=speechSynthesis.getVoices().filter(v=>v.lang.startsWith("en")); }
 speechSynthesis.onvoiceschanged=loadVoices; loadVoices();
-function speak(text){ if(!text) text=lastReply; if(!text) return;
-  speechSynthesis.cancel(); clearInterval(talking); mouth.classList.remove("talk");
+function speak(text){ if(!text) text=lastReply; if(!text) return; speechSynthesis.cancel(); clearInterval(talking); mouth.classList.remove("talk");
   const u=new SpeechSynthesisUtterance(text); if(voices.length) u.voice=voices[0];
-  u.onstart=()=>{ let open=false; talking=setInterval(()=>{ open=!open; mouth.classList.toggle("talk",open); }, 90); };
-  u.onboundary=(ev)=>{ if(ev.name==='word'||ev.charIndex%5===0) mouth.classList.toggle('talk'); };
-  u.onend=()=>{ clearInterval(talking); mouth.classList.remove('talk'); };
+  u.onstart=()=>{ let o=false; talking=setInterval(()=>{ o=!o; mouth.classList.toggle("talk",o); }, 90); };
+  u.onboundary=e=>{ if(e.name==="word"||e.charIndex%5===0) mouth.classList.toggle("talk"); };
+  u.onend=()=>{ clearInterval(talking); mouth.classList.remove("talk"); };
   speechSynthesis.speak(u);
 }
 
-/* ========== Local WebLLM (no key) ========== */
-let engine=null;
-const system=[{role:"system",content:
+/*** Dual Engine State ***/
+let engine=null; // WebLLM engine if loaded
+let preferLocal=false; // true after Load Local Model succeeds
+
+/*** Try to load local WebLLM from your repo (no CDN) ***/
+(async function tryLocalWebLLM(){
+  note("Looking for local WebLLM at ./lib/web-llm.umd.min.js …");
+  const ok = await new Promise(r=>{
+    const s=document.createElement("script");
+    s.src="./lib/web-llm.umd.min.js?v=1"; s.async=true;
+    s.onload=()=>r(true); s.onerror=()=>r(false);
+    document.head.appendChild(s);
+  });
+  if (ok && window.webllm) note("Found local WebLLM. You can use Local mode.");
+  else note("No local WebLLM found. Local mode disabled until you add /lib/web-llm.umd.min.js.");
+})();
+
+/*** Local mode: load model and answer using WebLLM ***/
+const systemMsg = {role:"system", content:
 `You are a focused coding helper for Minecraft Skript (Minehut/Purpur/1.21.x, SkBee) and Gorilla Tag/Unity 2021.3.21f1 (Photon PUN 2, PlayFab).
-Return concise, copy-pasteable code blocks in triple backticks. Avoid deprecated Skript syntaxes.`}];
+Return concise, copy-pasteable code blocks in triple backticks. Avoid deprecated Skript syntaxes.`};
 
-function webllmLoaded(){ return !!window.webllm; }
-
-loadBtn.addEventListener("click", async ()=>{
-  if(!webllmLoaded()){ note("WebLLM script not found. Ensure /lib/web-llm.umd.min.js exists in your repo."); return; }
+loadLocalBtn.addEventListener("click", async ()=>{
+  if (!window.webllm){ note("WebLLM script not loaded from /lib/. Add the file to enable Local mode."); return; }
   const { CreateMLCEngine, prebuiltAppConfig } = window.webllm;
-  const modelId = modelEl.value;
-  note(`Loading ${modelId}…`);
+  const modelId=modelEl.value;
+  note(`Loading local model: ${modelId} …`);
   sendBtn.disabled=true;
   try{
     engine = await CreateMLCEngine(modelId, { appConfig: prebuiltAppConfig, useWebWorker:false, gpu:true },
       (p)=> note(`${p.text} ${Math.round(p.progress*100)}%`));
-    note(`Loaded ${modelId}. Type and hit Send.`);
-    inputEl.focus(); sendBtn.disabled=false;
-  }catch(e){ console.error(e); note(`Load error: ${e.message}`); }
+    preferLocal = true;
+    note(`Local model loaded: ${modelId}. Type and press Send.`);
+    sendBtn.disabled=false;
+  }catch(e){
+    console.error(e); note("Local load error: "+e.message); preferLocal=false;
+  }
 });
 
-async function runLocal(messages){
-  // Try modern API
+async function localReply(prompt){
+  // try modern API
   try{
     if (engine?.chat?.completions?.create){
-      const out = await engine.chat.completions.create({ messages, temperature:0.2, max_tokens:900, max_new_tokens:900, stream:false });
-      const text = out?.choices?.[0]?.message?.content; if (text) return text;
+      const out=await engine.chat.completions.create({ messages:[systemMsg,{role:"user",content:prompt}], temperature:0.2, max_tokens:900, max_new_tokens:900, stream:false });
+      return out?.choices?.[0]?.message?.content || "No response.";
     }
-  }catch(e){ console.warn("chat.completions fallback →", e); }
-  // Fallback (older builds)
-  if (typeof engine?.generate === "function"){
-    const prompt = messages.map(m=>`${m.role.toUpperCase()}: ${m.content}`).join("\n")+"\nASSISTANT:";
-    const out = await engine.generate(prompt, { temperature:0.2, max_tokens:900 });
-    return out?.output_text || (typeof out==="string" ? out : null);
+  }catch(e){ console.warn("local modern API failed", e); }
+  // fallback legacy
+  if (typeof engine?.generate==="function"){
+    const built = `${systemMsg.content}\nUSER: ${prompt}\nASSISTANT:`;
+    const out = await engine.generate(built, { temperature:0.2, max_tokens:900 });
+    return out?.output_text || String(out || "No response.");
   }
-  throw new Error("No compatible WebLLM method found.");
+  throw new Error("No compatible WebLLM method on this build.");
 }
 
-/* ========== OPTIONAL proxy fallback (only if WORKER_URL is set) ========== */
-async function runProxy(userText){
-  if (!WORKER_URL) throw new Error("Proxy disabled.");
+/*** Proxy mode: call your Worker URL ***/
+askProxyBtn.addEventListener("click", async ()=>{
+  if(!WORKER_URL){ note("WORKER_URL is blank. Set it in the script to use Proxy mode."); return; }
+  // quick ping
+  try{
+    const health = await fetch(WORKER_URL.replace(/\/$/,"")+"/health").then(r=>r.ok?r.json():{});
+    note(health?.ok ? "Proxy health OK." : "Proxy reachable.");
+  }catch{ note("Proxy health check failed. It may still work, try Ask via Proxy."); }
+});
+
+async function proxyReply(prompt){
+  if(!WORKER_URL) throw new Error("WORKER_URL not set");
   const r = await fetch(WORKER_URL, { method:"POST", headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ messages: system.concat({role:"user",content:userText}) }) });
+    body: JSON.stringify({ messages:[systemMsg,{role:"user",content:prompt}] }) });
   const raw = await r.text();
-  if (!r.ok) throw new Error(`HTTP ${r.status}: ${raw}`);
-  let data; try{ data = JSON.parse(raw); }catch{ throw new Error("Bad JSON from proxy"); }
+  if(!r.ok) throw new Error(`HTTP ${r.status}: ${raw}`);
+  let data; try{ data = JSON.parse(raw); }catch{ throw new Error("Bad JSON from proxy: "+raw.slice(0,200)); }
   return data?.text || "No response.";
 }
 
-/* ========== Send flow ========== */
+/*** Send button: choose engine automatically ***/
 sendBtn.addEventListener("click", async ()=>{
   const text = inputEl.value.trim(); if(!text) return;
-  inputEl.value=""; inputEl.focus(); sendBtn.disabled=true;
-  addBubble("user", text); const thinking = addBubble("assistant","…thinking…");
+  inputEl.value=""; const thinking = addBubble("assistant","…thinking…"); addBubble("user", text);
+  sendBtn.disabled=true;
+
   try{
     let reply;
-    if (engine) {
-      reply = await runLocal(system.concat({role:"user",content:text}));
-    } else if (webllmLoaded()) {
-      // User forgot to click "Load Model"
-      note("Load a model first.");
-      thinking.innerHTML = mdLite("**Hint:** Click **Load Model** first.");
-      sendBtn.disabled=false; return;
-    } else if (WORKER_URL) {
-      // optional fallback
-      reply = await runProxy(text);
-    } else {
-      throw new Error("No local model loaded. Add /lib/web-llm.umd.min.js and click Load Model.");
-    }
-    lastReply = reply; thinking.innerHTML = mdLite(reply); speak(reply); note("Done.");
+    if (preferLocal && engine){ reply = await localReply(text); }
+    else if (WORKER_URL){ reply = await proxyReply(text); }
+    else throw new Error("No engine available. Either load Local model or set WORKER_URL.");
+
+    thinking.innerHTML = mdLite(reply);
+    lastReply = reply; speak(reply);
+    note("Done.");
   }catch(e){
-    thinking.innerHTML = mdLite("**Error:** "+escapeHtml(e.message));
-    note("Generation error.");
+    console.error(e); thinking.innerHTML = mdLite("**Error:** "+escapeHtml(e.message)); note("Error.");
   }finally{ sendBtn.disabled=false; }
 });
 
-/* UX bits */
+/*** Also allow Enter to send ***/
 inputEl.addEventListener("keydown", e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendBtn.click(); }});
-document.querySelectorAll(".chip").forEach(ch=> ch.addEventListener("click", ()=>{ inputEl.value = ch.dataset.text; inputEl.focus(); }));
+note("Ready. Add /lib/web-llm.umd.min.js for Local mode, or set WORKER_URL for Proxy mode.");
 </script>
 </body>
 </html>
